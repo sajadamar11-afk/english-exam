@@ -162,7 +162,12 @@ nav.bottom button.pdf{color:#fff;background:var(--blue);margin:5px 6px;border-ra
 #toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%);background:#222;color:#fff;padding:9px 16px;border-radius:20px;font-size:14px;z-index:90;opacity:0;transition:opacity .2s;pointer-events:none}
 #toast.on{opacity:1}
 
+.page .wm{position:absolute;inset:0;z-index:5;pointer-events:none;display:flex;flex-direction:column;justify-content:space-around;align-items:center;overflow:hidden}
+.page .wm div{transform:rotate(-32deg);white-space:nowrap;font-family:Tahoma,Arial,sans-serif;font-weight:bold;font-size:64px;color:rgba(200,30,40,.16);letter-spacing:2px}
+.lockic{font-size:46px;text-align:center;margin:4px 0}
 @media print{
+  body.trial #render{display:none!important}
+  body.trial::before{content:"🔒 الطباعة متاحة للنسخة المفعلة فقط";display:block;text-align:center;font-size:28px;padding:80px 20px;font-family:Tahoma,sans-serif}
   @page{size:A4;margin:0}
   body{background:#fff}
   body>*:not(#render){display:none!important}
@@ -178,7 +183,7 @@ nav.bottom button.pdf{color:#fff;background:var(--blue);margin:5px 6px;border-ra
   <div class="t"><b>English Exam Maker Pro</b><small id="devline"></small></div>
   <span class="ok" id="okLbl">✔ مفعلة</span>
   <button class="ibtn i-load" data-act="load">📂</button>
-  <button class="ibtn i-save" data-act="save">💾 حفظ</button>
+  <button class="ibtn i-save" data-act="save" id="saveTop">💾 حفظ</button>
 </header>
 <div id="trial"><span id="trialTxt"></span><button data-act="activate">🔑 شراء وتفعيل</button></div>
 
@@ -230,7 +235,7 @@ nav.bottom button.pdf{color:#fff;background:var(--blue);margin:5px 6px;border-ra
 <nav class="bottom">
   <button class="on" data-tab="edit"><span class="ic">✏️</span>التحرير</button>
   <button data-tab="preview"><span class="ic">👁</span>المعاينة</button>
-  <button class="pdf" data-act="pdf"><span class="ic">📄</span>تصدير PDF</button>
+  <button class="pdf" data-act="pdf"><span class="ic" id="pdfIc">📄</span>تصدير PDF</button>
   <button data-act="more"><span class="ic">☰</span>المزيد</button>
 </nav>
 
@@ -257,7 +262,6 @@ const DEV_NAME = "سجاد الزويني";
 const DEV_PHONE = "07705686013";
 const DEV_WHATSAPP = "9647705686013";
 const DEV_CONTACTS = [DEV_PHONE];
-const TRIAL_SECONDS = 60 * 60;
 const LICENSE_SECRET = "SZ-jKn85yMi0yUmjNvACriTmLqb";   // نفس القيمة الموجودة بـ exam_core.py
 const SESSION_VER = "2";
 const PALETTE = ["#000000","#434343","#7f7f7f","#ffffff","#8b0000","#c00000","#ff0000","#ff6600",
@@ -489,6 +493,12 @@ function paginate(){
   if (pages.length > 1) pages.forEach((p, i) => {
     const n = document.createElement("div"); n.className = "pn"; n.textContent = `Page ${i + 1} of ${pages.length}`;
     p.appendChild(n);
+  });
+  if (!activated) pages.forEach(p => {
+    const w = document.createElement("div");
+    w.className = "wm";
+    w.innerHTML = "<div>نسخة تجريبية</div><div>TRIAL VERSION</div><div>نسخة تجريبية</div>";
+    p.appendChild(w);
   });
   return pages;
 }
@@ -822,7 +832,6 @@ function showPdfReady(blob, pdf){
 }
 
 /* ============ التجربة والتفعيل ============ */
-let used = +LS.get("used", 0);
 let activated = false;
 
 function machineId(){
@@ -855,18 +864,23 @@ function setBars(){
 function updateLicenseUI(){
   $("#trial").style.display = activated ? "none" : "flex";
   $("#okLbl").style.display = activated ? "inline" : "none";
+  document.body.classList.toggle("trial", !activated);
+  $("#saveTop").textContent = activated ? "💾 حفظ" : "🔒 حفظ";
+  $("#pdfIc").textContent = activated ? "📄" : "🔒";
+  if ($("#tab-preview").classList.contains("on")) renderPreview();     // يشيل/يحط العلامة المائية
   if (activated) return setBars();
-  const left = Math.max(0, TRIAL_SECONDS - used);
-  $("#trialTxt").textContent = left > 0
-    ? `⏳ نسخة تجريبية | الوقت المتبقي: ${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`
-    : "⛔ انتهت الفترة التجريبية - يرجى التفعيل";
-  if (!setBars._done){ setBars(); setBars._done = true; }
-
+  $("#trialTxt").textContent = "🔒 نسخة تجريبية | التصدير والحفظ بعد التفعيل";
+  setBars();
 }
 function guard(){
-  if (activated || used < TRIAL_SECONDS) return true;
-  alert("انتهت ساعة الاستخدام التجريبية.\nيرجى شراء وتفعيل النسخة الكاملة.");
-  openActivation();
+  if (activated) return true;
+  openSheet(`<div class="lockic">🔒</div>
+    <h3 style="text-align:center">هذه الميزة للنسخة المفعلة فقط</h3>
+    <p style="text-align:center">بالنسخة التجريبية تگدر تكتب الأسئلة وتشوف المعاينة.<br>
+    <b>تصدير PDF والطباعة والحفظ</b> تشتغل بعد التفعيل.</p>
+    <p style="text-align:center;color:#1f6fb5;font-weight:bold">📞 <span dir="ltr">${DEV_PHONE}</span> — ${DEV_NAME}</p>
+    <div class="btns"><button class="bg-green" id="goAct">🔑 تفعيل الآن</button><button class="bg-gray" onclick="closeSheet()">رجوع</button></div>`);
+  $("#goAct").onclick = openActivation;
   return false;
 }
 function openActivation(){
@@ -888,13 +902,7 @@ function openActivation(){
     else alert("كود التفعيل غير صحيح لهذا الجهاز.");
   };
 }
-setInterval(() => {
-  if (activated || document.visibilityState !== "visible" || used >= TRIAL_SECONDS) return;
-  used++;
-  if (used % 5 === 0) LS.set("used", used);
-  updateLicenseUI();
-}, 1000);
-document.addEventListener("visibilitychange", () => { if (!activated) LS.set("used", used); if (document.visibilityState === "hidden") LS.set("session", D); });
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") LS.set("session", D); });
 
 /* ============ بدء التشغيل ============ */
 function renderAll(){
