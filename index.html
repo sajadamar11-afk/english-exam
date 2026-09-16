@@ -73,10 +73,21 @@ textarea{resize:vertical;line-height:1.35}
 .q{background:#f7f8f3;border:1px solid var(--line);border-radius:6px;margin:10px 8px;padding:10px;direction:ltr}
 .qtop{display:flex;align-items:center;gap:6px;margin-bottom:6px}
 .qlbl{font-weight:bold;color:var(--navy);font-size:16px;flex:1;font-family:Arial}
+.seg{display:flex;border:1px solid #9aa0a6;border-radius:6px;overflow:hidden;flex:none}
+.seg button{border:0;border-left:1px solid #c9cdd2;background:#fff;padding:7px 9px;font-size:13px;font-weight:bold;color:var(--navy);font-family:Arial}
+.seg button:first-child{border-left:0}
+.seg button.on{background:var(--blue);color:#fff}
+.fb.abc{width:auto;padding:0 7px;font-size:14px;font-weight:bold;font-family:Arial}
 .del{background:#d0333b;color:#fff;border:0;border-radius:4px;padding:6px 14px;font-weight:bold;font-size:13px}
 .qmid{display:grid;grid-template-columns:1fr 84px;gap:6px;margin-bottom:6px}
 .mark{text-align:center!important}
-.item{display:grid;grid-template-columns:34px 40px 1fr 66px;gap:5px;margin-top:5px;align-items:center}
+.item{display:grid;grid-template-columns:32px 30px 40px 1fr 60px;gap:4px;margin-top:5px;align-items:center}
+.item.lvl1{margin-left:22px;grid-template-columns:32px 30px 36px 1fr 56px;position:relative}
+.item.lvl1::before{content:"";position:absolute;left:-14px;top:-6px;width:10px;height:24px;border-left:2px solid #9aa0a6;border-bottom:2px solid #9aa0a6;border-radius:0 0 0 4px}
+.ind{background:#e6ecf5;color:var(--navy);border:1px solid #9aa0a6;border-radius:4px;height:36px;font-size:15px;font-weight:bold;padding:0}
+.lvl1 .ind{background:#dff0e2}
+.subbtns{display:flex;gap:6px;flex-wrap:wrap}
+.sub.pt{background:#5b6b8c}
 .x{background:#d0333b;color:#fff;border:0;border-radius:4px;height:36px;font-weight:bold;font-size:15px;padding:0}
 .item input{padding:7px 5px}
 .num{text-align:center!important}
@@ -101,6 +112,7 @@ textarea{resize:vertical;line-height:1.35}
 .qt .m{font-weight:bold;white-space:nowrap}
 .ps{text-align:justify;margin:4px 0 3px}
 .it{display:flex;justify-content:space-between;gap:10px;margin:0 0 2px}
+.it.l1{padding-left:24px}
 .page .foot{position:absolute;left:53px;right:53px;bottom:52px;border-top:1px solid #000;padding-top:6px;
   display:grid;grid-template-columns:1fr auto 1fr;font-weight:bold}
 .page .foot .c{font-style:italic;text-align:center}
@@ -173,6 +185,7 @@ nav.bottom button.pdf{color:#fff;background:var(--blue);margin:5px 6px;border-ra
       <button class="fb i" data-fmt="i" title="مائل">I</button>
       <button class="fb u" data-fmt="u" title="تحته خط">U</button>
       <button class="fb color" id="colorBtn" title="لون الخط"><span class="a">A<span class="bar" id="colorBar"></span></span>▾</button>
+      <button class="fb abc" id="choiceBtn" title="إدراج اختيارات a b c">( a b c )</button>
       <span class="sep"></span>
       <span class="step">الخط <button data-step="font:-1">−</button><output id="fontOut"></output><button data-step="font:1">+</button></span>
       <span class="sep"></span>
@@ -263,7 +276,25 @@ function defaultExam(){
     questions:[ newQuestion() ]
   };
 }
-function newQuestion(){ return {title:"", mark:"", passage:"", items:[{num:"1", text:"", mark:""}]}; }
+function newQuestion(){ return {title:"", mark:"", passage:"", numbering:"123", items:[{num:"1", text:"", mark:""}]}; }
+// ترقيم الفروع: 1 2 3  |  a b c  |  A B C
+function itemLabel(k, style){
+  if (style === "abc") return k < 26 ? String.fromCharCode(97 + k) : String(k + 1);
+  if (style === "ABC") return k < 26 ? String.fromCharCode(65 + k) : String(k + 1);
+  return String(k + 1);
+}
+const isAutoNum = n => /^(\d+|[a-zA-Z])$/.test((n || "").trim());
+// النقاط الداخلية: إذا الفروع أحرف تصير أرقام، وإذا الفروع أرقام تصير أحرف
+const subStyle = st => (st === "abc" || st === "ABC") ? "123" : "abc";
+const subStyleName = st => subStyle(st) === "123" ? "1 2 3" : "a b c";
+function renumber(q){
+  let main = 0, sub = 0;
+  q.items.forEach(it => {
+    const auto = isAutoNum(it.num) || !(it.num || "").trim();
+    if (it.level === 1 && main > 0){ sub++; if (auto) it.num = itemLabel(sub - 1, subStyle(q.numbering)); }
+    else { it.level = 0; main++; sub = 0; if (auto) it.num = itemLabel(main - 1, q.numbering); }
+  });
+}
 
 let D = (LS.get("session_ver") === SESSION_VER && LS.get("session")) || defaultExam();
 D = Object.assign(defaultExam(), D);
@@ -308,6 +339,8 @@ function renderQuestions(){
   box.innerHTML = D.questions.map((q, i) => `
     <div class="q" data-qi="${i}">
       <div class="qtop"><span class="qlbl">Q${i + 1}\\</span>
+        <div class="seg">${[["123","1 2 3"],["abc","a b c"],["ABC","A B C"]].map(([k, t]) =>
+          `<button class="${(q.numbering || "123") === k ? "on" : ""}" data-act="numStyle" data-qi="${i}" data-style="${k}">${t}</button>`).join("")}</div>
         <button class="del" data-act="delQ" data-qi="${i}">Delete</button></div>
       <div class="qmid">
         <input type="text" placeholder="Question title  e.g. UNSEEN PASSAGE : ..." data-p="questions.${i}.title">
@@ -315,13 +348,17 @@ function renderQuestions(){
       </div>
       <textarea rows="3" placeholder="Passage text or instructions (اختياري)..." data-p="questions.${i}.passage"></textarea>
       ${q.items.map((it, j) => `
-        <div class="item">
+        <div class="item${it.level === 1 ? " lvl1" : ""}">
           <button class="x" data-act="delItem" data-qi="${i}" data-ij="${j}">✕</button>
+          <button class="ind" data-act="indent" data-qi="${i}" data-ij="${j}" title="${it.level === 1 ? "إرجاع لفرع رئيسي" : "جعله نقطة داخل الفرع السابق"}">${it.level === 1 ? "⇤" : "⇥"}</button>
           <input type="text" class="num" inputmode="text" data-p="questions.${i}.items.${j}.num">
-          <input type="text" placeholder="Sub-item text ..." data-p="questions.${i}.items.${j}.text">
+          <input type="text" placeholder="${it.level === 1 ? "Point text ..." : "Sub-item text ..."}" data-p="questions.${i}.items.${j}.text">
           <input type="text" class="mark" placeholder="Mark (2M)" data-p="questions.${i}.items.${j}.mark">
         </div>`).join("")}
-      <button class="sub" dir="ltr" data-act="addItem" data-qi="${i}">+ Add Sub-Item</button>
+      <div class="subbtns" dir="ltr">
+        <button class="sub" data-act="addItem" data-qi="${i}">+ Add Sub-Item</button>
+        <button class="sub pt" data-act="addPoint" data-qi="${i}">+ Add Point (${subStyleName(q.numbering)})</button>
+      </div>
     </div>`).join("");
   fillInputs(box);
 }
@@ -382,12 +419,14 @@ function buildBlocks(){
         if (hasText(par)) qb.push(mk(`<p class="ps" style="font-size:${px}px;line-height:${lh}">${linesHtml(par)}</p>`));
       });
     }
-    q.items.forEach(it => {
+    q.items.forEach((it, k) => {
       if (!hasText(it.text)) return;
       const num = (it.num || "").trim();
-      qb.push(mk(`<div class="it" style="font-size:${px}px;line-height:${lh}">
+      const next = q.items.slice(k + 1).find(x => hasText(x.text));
+      const keep = it.level !== 1 && next && next.level === 1;      // عنوان الفرع يلتصق بأول نقطة
+      qb.push(mk(`<div class="it${it.level === 1 ? " l1" : ""}" style="font-size:${px}px;line-height:${lh}">
         <div>${num ? "<b>" + esc(num) + ".</b> " : ""}${fx(it.text)}</div>
-        <div class="m" style="white-space:nowrap">${esc(normMark(it.mark))}</div></div>`));
+        <div class="m" style="white-space:nowrap">${esc(normMark(it.mark))}</div></div>`, keep));
     });
     qb[qb.length - 1].el.style.marginBottom = Math.round(px * 1.2) + "px";
     blocks.push(...qb);
@@ -527,6 +566,21 @@ $("#swatches").innerHTML = PALETTE.map(c => `<button class="sw" style="backgroun
 pal.querySelectorAll(".sw").forEach(b => noBlur(b, () => { pal.classList.remove("on"); applyColor(b.dataset.c); }));
 noBlur($("#removeColor"), () => { pal.classList.remove("on"); applyColor(null); });
 $("#customColor").addEventListener("change", e => { pal.classList.remove("on"); applyColor(e.target.value); });
+function insertAtCursor(text, caret){
+  const w = lastEl;
+  if (!w || !document.body.contains(w)) { toast("اضغط على خانة الفرع أولاً"); return; }
+  const t = w.value;
+  const act = w === document.activeElement;
+  const st = act ? w.selectionStart : lastSel[0], en = act ? w.selectionEnd : lastSel[1];
+  const pre = st > 0 && t[st - 1] !== " " ? " " : "";
+  const nw = t.slice(0, st) + pre + text + t.slice(en);
+  w.value = nw; setP(w.dataset.p, nw); changed();
+  const pos = st + pre.length + caret;
+  w.focus({preventScroll: true});
+  try { w.setSelectionRange(pos, pos); } catch(e){}
+  lastSel = [pos, pos];
+}
+noBlur($("#choiceBtn"), () => insertAtCursor("( a.    b.    c.    )", 5));
 noBlur($("#colorBtn"), e => {
   if (pal.classList.contains("on")){ pal.classList.remove("on"); return; }
   const r = $("#colorBtn").getBoundingClientRect();
@@ -567,18 +621,38 @@ document.addEventListener("click", e => {
       if (confirm(`حذف السؤال:\n${name} ؟`)){ D.questions.splice(qi, 1); renderQuestions(); changed(); }
       break;
     }
-    case "addItem": {
+    case "addItem":
+    case "addPoint": {
       const q = D.questions[qi];
-      q.items.push({num: String(q.items.length + 1), text: "", mark: ""});
+      if (b.dataset.act === "addPoint" && !q.items.length){ toast("أضف فرع أولاً"); break; }
+      q.items.push({num: "", text: "", mark: "", level: b.dataset.act === "addPoint" ? 1 : 0});
+      renumber(q);
       renderQuestions(); changed();
       const rows = document.querySelectorAll(`.q[data-qi="${qi}"] .item`);
       rows[rows.length - 1].querySelectorAll("input")[1].focus();
       break;
     }
+    case "numStyle": {
+      const q = D.questions[qi];
+      q.numbering = b.dataset.style;
+      q.items.forEach(it => { it.num = ""; });
+      renumber(q);
+      renderQuestions(); changed();
+      break;
+    }
     case "delItem": {
       const q = D.questions[qi];
       q.items.splice(ij, 1);
-      q.items.forEach((it, k) => { if (/^\d+$/.test((it.num || "").trim())) it.num = String(k + 1); });
+      renumber(q);
+      renderQuestions(); changed();
+      break;
+    }
+    case "indent": {
+      const q = D.questions[qi], it = q.items[ij];
+      if (it.level !== 1 && ij === 0){ toast("أول فرع ما يصير نقطة داخلية"); break; }
+      it.level = it.level === 1 ? 0 : 1;
+      if (isAutoNum(it.num)) it.num = "";
+      renumber(q);
       renderQuestions(); changed();
       break;
     }
