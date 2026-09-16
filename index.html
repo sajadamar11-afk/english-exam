@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>English Exam Maker Pro</title>
+<meta name="theme-color" content="#1e2a45">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Exam Maker">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192.png">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --navy:#1e2a45; --navy2:#2c3b5e; --red:#b3262e; --yellow:#f7c600; --blue:#1f6fb5;
+  --orange:#c8641e; --green:#2e8b3a; --bg:#e9ecef; --panel:#f1f3ea; --line:#c5cabd;
+  --safe-b:env(safe-area-inset-bottom,0px); --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);font-family:"Segoe UI",Tahoma,-apple-system,Roboto,sans-serif;color:#1b1b1b}
+button{font-family:inherit;cursor:pointer}
+input,textarea{font-family:Arial,Helvetica,sans-serif;font-size:16px}
+
+/* ===== الأشرطة العلوية ===== */
+.appbar{position:sticky;top:0;z-index:30;background:var(--navy);color:#fff;padding:calc(var(--safe-t) + 8px) 12px 8px;
+  display:flex;align-items:center;gap:8px}
+.appbar .t{flex:1;min-width:0}
+.appbar .t b{display:block;color:#f4d27a;font-size:15px}
+.appbar .t small{color:#cfd8e8;font-size:11.5px}
+.appbar .ok{color:#7CFC9A;font-weight:bold;font-size:12px;display:none}
+.ibtn{border:0;border-radius:6px;padding:8px 10px;font-weight:bold;color:#fff;font-size:13px}
+.i-save{background:var(--green)} .i-load{background:var(--orange)}
+#trial{position:sticky;top:var(--app-h,52px);z-index:29;background:var(--red);color:#fff;display:flex;align-items:center;gap:8px;padding:6px 10px;font-size:12.5px;font-weight:bold}
+#trial span{flex:1}
+#trial button{background:var(--yellow);color:#1b1b1b;border:1px solid #c79f00;border-radius:5px;padding:5px 10px;font-weight:bold;font-size:12px;white-space:nowrap}
+
+/* ===== شريط التنسيق ===== */
+.fmtbar{position:sticky;top:var(--bar-h,52px);z-index:25;background:#eef1e7;border-bottom:1px solid #c9cfbf;
+  display:flex;align-items:center;gap:5px;padding:6px 6px;overflow-x:auto;scrollbar-width:none}
+.fmtbar::-webkit-scrollbar{display:none}
+.fb{flex:none;width:34px;height:34px;border:1px solid #9aa0a6;background:#fff;border-radius:5px;font-size:17px;color:var(--navy);padding:0}
+.fb.b{font-weight:900}.fb.i{font-style:italic;font-family:"Times New Roman",serif}.fb.u{text-decoration:underline}
+.fb.color{width:auto;padding:0 6px;display:flex;align-items:center;gap:3px}
+.fb.color .a{display:flex;flex-direction:column;align-items:center;font-weight:900;line-height:1}
+.fb.color .bar{width:18px;height:4px;margin-top:2px;border:1px solid #666}
+.sep{flex:none;width:1px;height:26px;background:#c0c4c8;margin:0 2px}
+.step{flex:none;display:flex;align-items:center;gap:2px;font-size:11.5px;color:#333;white-space:nowrap}
+.step button{width:28px;height:30px;border:1px solid #9aa0a6;background:#fff;border-radius:5px;font-size:16px;font-weight:bold;padding:0}
+.step output{direction:ltr;min-width:36px;text-align:center;font-weight:bold;font-size:13px}
+
+/* ===== المحرر ===== */
+main{padding-bottom:calc(70px + var(--safe-b))}
+.tab{display:none}.tab.on{display:block}
+.box{background:var(--panel);border:1px solid #b9bfae;margin:8px;border-radius:6px;padding:10px}
+.hint{font-weight:bold;font-size:13px;margin:0 0 8px;color:#333}
+.hgrid{display:grid;grid-template-columns:1fr;gap:8px}
+@media(min-width:640px){.hgrid{grid-template-columns:1fr 1fr 1fr}}
+label.l{display:block;font-size:12.5px;color:#222;margin-bottom:3px}
+input[type=text],textarea{width:100%;background:#fff;border:1px solid #a9aeb3;border-radius:4px;padding:7px 8px;direction:ltr;text-align:left;color:#111}
+input[type=text]:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(31,111,181,.18)}
+textarea{resize:vertical;line-height:1.35}
+.row2{display:grid;grid-template-columns:1fr 1.6fr;gap:8px;margin-top:10px}
+.chk{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;direction:ltr;justify-content:flex-end}
+.chk input{width:20px;height:20px}
+.colors{display:flex;flex-wrap:wrap;gap:10px 16px;margin-top:12px}
+.colors label{display:flex;align-items:center;gap:6px;font-size:12.5px}
+.colors input{width:44px;height:28px;border:1px solid #555;border-radius:4px;padding:0;background:none}
+
+.q{background:#f7f8f3;border:1px solid var(--line);border-radius:6px;margin:10px 8px;padding:10px;direction:ltr}
+.qtop{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.qlbl{font-weight:bold;color:var(--navy);font-size:16px;flex:1;font-family:Arial}
+.del{background:#d0333b;color:#fff;border:0;border-radius:4px;padding:6px 14px;font-weight:bold;font-size:13px}
+.qmid{display:grid;grid-template-columns:1fr 84px;gap:6px;margin-bottom:6px}
+.mark{text-align:center!important}
+.item{display:grid;grid-template-columns:34px 40px 1fr 66px;gap:5px;margin-top:5px;align-items:center}
+.x{background:#d0333b;color:#fff;border:0;border-radius:4px;height:36px;font-weight:bold;font-size:15px;padding:0}
+.item input{padding:7px 5px}
+.num{text-align:center!important}
+.sub{background:var(--blue);color:#fff;border:0;border-radius:4px;padding:7px 12px;font-weight:bold;font-size:13px;margin-top:8px}
+.addq{display:block;width:calc(100% - 16px);margin:12px 8px;background:var(--green);color:#fff;border:0;border-radius:6px;padding:14px;font-size:15px;font-weight:bold}
+
+/* ===== المعاينة ===== */
+.pvtitle{margin:8px;background:#fbfbf7;border:1px solid #8d9399;border-radius:4px;padding:7px;text-align:center;font-weight:bold;color:var(--navy);font-size:13px}
+#pages{direction:ltr;padding:0 8px 8px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.pwrap{overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.25);background:#fff;flex:none}
+.pwrap .page{transform-origin:top left}
+
+/* ===== ورقة A4 (794×1123) ===== */
+#render{position:fixed;left:-30000px;top:0;direction:ltr}
+.page{width:794px;height:1123px;background:#fff;position:relative;font-family:Arial,Helvetica,sans-serif;color:#000;overflow:hidden}
+.page .frame{position:absolute;left:30px;top:30px;right:30px;bottom:30px;border:1.6px solid #000}
+.page .content{position:absolute;left:53px;right:53px;top:53px;height:957px;overflow:hidden}
+.hdr{display:grid;grid-template-columns:34% 32% 34%;font-weight:bold;padding-bottom:8px;border-bottom:2.2px solid #000;margin-bottom:12px}
+.hdr div{white-space:normal}
+.qt{display:flex;justify-content:space-between;gap:10px;margin-top:2px}
+.qt .tt u{text-decoration:underline}
+.qt .m{font-weight:bold;white-space:nowrap}
+.ps{text-align:justify;margin:4px 0 3px}
+.it{display:flex;justify-content:space-between;gap:10px;margin:0 0 2px}
+.page .foot{position:absolute;left:53px;right:53px;bottom:52px;border-top:1px solid #000;padding-top:6px;
+  display:grid;grid-template-columns:1fr auto 1fr;font-weight:bold}
+.page .foot .c{font-style:italic;text-align:center}
+.page .foot .r{text-align:right}
+.page .pn{position:absolute;bottom:34px;left:0;right:0;text-align:center;font-size:10px}
+
+/* ===== التنقل السفلي ===== */
+nav.bottom{position:fixed;bottom:0;left:0;right:0;z-index:40;background:#fff;border-top:1px solid #cfd3d7;
+  display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:var(--safe-b)}
+nav.bottom button{border:0;background:none;padding:8px 2px 7px;font-size:11.5px;color:#555;display:flex;flex-direction:column;align-items:center;gap:2px}
+nav.bottom button .ic{font-size:21px;line-height:1}
+nav.bottom button.on{color:var(--blue);font-weight:bold}
+nav.bottom button.pdf{color:#fff;background:var(--blue);margin:5px 6px;border-radius:9px}
+
+/* ===== النوافذ ===== */
+.modal{position:fixed;inset:0;z-index:60;background:rgba(10,15,30,.5);display:none;align-items:flex-end;justify-content:center}
+.modal.on{display:flex}
+.sheet{background:#fff;width:100%;max-width:560px;border-radius:14px 14px 0 0;padding:14px 14px calc(16px + var(--safe-b));max-height:85vh;overflow:auto}
+.sheet h3{margin:0 0 10px;color:var(--navy);font-size:17px}
+.sheet p{margin:6px 0;font-size:14px}
+.sheet .btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.sheet .btns button{flex:1;border:0;border-radius:7px;padding:12px;font-weight:bold;font-size:14px;color:#fff;min-width:120px}
+.bg-green{background:var(--green)}.bg-blue{background:var(--blue)}.bg-gray{background:#6b7280}.bg-red{background:#d0333b}.bg-orange{background:var(--orange)}
+.mid{font-family:Consolas,monospace;font-size:18px;font-weight:bold;direction:ltr;text-align:center;background:#f3f4f6;border-radius:6px;padding:10px;letter-spacing:1px;user-select:all}
+.list{margin-top:8px}
+.list .e{display:flex;align-items:center;gap:8px;border-bottom:1px solid #eee;padding:10px 2px}
+.list .e .n{flex:1;min-width:0}
+.list .e .n b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .e .n small{color:#777}
+.list .e button{border:0;border-radius:5px;padding:8px 12px;color:#fff;font-weight:bold}
+.menu button{display:block;width:100%;text-align:right;border:0;background:#f5f6f8;margin:6px 0;border-radius:8px;padding:14px;font-size:15px}
+#palette{position:fixed;z-index:50;background:#fff;border:1px solid #bbb;border-radius:8px;padding:8px;box-shadow:0 6px 20px rgba(0,0,0,.25);display:none;direction:ltr}
+#palette.on{display:block}
+#palette .g{display:grid;grid-template-columns:repeat(5,34px);gap:6px}
+#palette .sw{width:34px;height:34px;border-radius:5px;border:1px solid #777}
+#palette .more{display:flex;gap:6px;margin-top:8px;direction:rtl}
+#palette .more button,#palette .more label{flex:1;font-size:12.5px;border:1px solid #bbb;background:#f5f6f8;border-radius:5px;padding:8px 4px;text-align:center}
+#palette .more input{position:absolute;opacity:0;width:1px;height:1px}
+#busy{position:fixed;inset:0;z-index:80;background:rgba(10,15,30,.6);display:none;align-items:center;justify-content:center;color:#fff;font-weight:bold;font-size:16px}
+#busy.on{display:flex}
+#toast{position:fixed;left:50%;bottom:calc(84px + var(--safe-b));transform:translateX(-50%);background:#222;color:#fff;padding:9px 16px;border-radius:20px;font-size:14px;z-index:90;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  body>*:not(#render){display:none!important}
+  #render{position:static;left:0}
+  #render .page{page-break-after:always;break-after:page}
+  #render .page:last-child{page-break-after:auto;break-after:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="appbar" id="appbar">
+  <div class="t"><b>English Exam Maker Pro</b><small id="devline"></small></div>
+  <span class="ok" id="okLbl">✔ مفعلة</span>
+  <button class="ibtn i-load" data-act="load">📂</button>
+  <button class="ibtn i-save" data-act="save">💾 حفظ</button>
+</header>
+<div id="trial"><span id="trialTxt"></span><button data-act="activate">🔑 شراء وتفعيل</button></div>
+
+<main>
+  <!-- ========== التحرير ========== -->
+  <section class="tab on" id="tab-edit">
+    <div class="fmtbar" id="fmtbar">
+      <button class="fb b" data-fmt="b" title="عريض">B</button>
+      <button class="fb i" data-fmt="i" title="مائل">I</button>
+      <button class="fb u" data-fmt="u" title="تحته خط">U</button>
+      <button class="fb color" id="colorBtn" title="لون الخط"><span class="a">A<span class="bar" id="colorBar"></span></span>▾</button>
+      <span class="sep"></span>
+      <span class="step">الخط <button data-step="font:-1">−</button><output id="fontOut"></output><button data-step="font:1">+</button></span>
+      <span class="sep"></span>
+      <span class="step">التباعد <button data-step="ls:-1">−</button><output id="lsOut"></output><button data-step="ls:1">+</button></span>
+    </div>
+
+    <div class="box">
+      <p class="hint">التحكم الكامل بخانات الترويسة (اكتب وعدل ما تشاء في كل عمود):</p>
+      <div class="hgrid">
+        <div><label class="l">العمود الأيمن (Right):</label><textarea rows="3" data-p="header.right"></textarea></div>
+        <div><label class="l">العمود الأوسط (Center):</label><textarea rows="4" data-p="header.center"></textarea></div>
+        <div><label class="l">العمود الأيسر (Left):</label><textarea rows="3" data-p="header.left"></textarea></div>
+      </div>
+      <div class="row2">
+        <div><label class="l">اسم المدرس:</label><input type="text" data-p="teacher"></div>
+        <div><label class="l">عبارة التمنيات:</label><input type="text" data-p="wishes"></div>
+      </div>
+      <label class="chk">School Administration Signature <input type="checkbox" data-p="admin_sig"></label>
+      <div class="colors">
+        <label>لون الترويسة <input type="color" data-p="header_color"></label>
+        <label>لون عناوين الأسئلة <input type="color" data-p="title_color"></label>
+        <label>لون النص العام <input type="color" data-p="text_color"></label>
+      </div>
+    </div>
+
+    <div id="questions"></div>
+    <button class="addq" dir="ltr" data-act="addQ">+ Add Main Question (Q1, Q2, ...)</button>
+  </section>
+
+  <!-- ========== المعاينة ========== -->
+  <section class="tab" id="tab-preview">
+    <div class="pvtitle">🔍 المعاينة الحية المباشرة لورقة الامتحان (Live Preview)</div>
+    <div id="pages"></div>
+  </section>
+</main>
+
+<nav class="bottom">
+  <button class="on" data-tab="edit"><span class="ic">✏️</span>التحرير</button>
+  <button data-tab="preview"><span class="ic">👁</span>المعاينة</button>
+  <button class="pdf" data-act="pdf"><span class="ic">📄</span>تصدير PDF</button>
+  <button data-act="more"><span class="ic">☰</span>المزيد</button>
+</nav>
+
+<div id="render"></div>
+
+<div id="palette">
+  <div class="g" id="swatches"></div>
+  <div class="more">
+    <label>🎨 لون آخر<input type="color" id="customColor"></label>
+    <button id="removeColor">✖ إزالة اللون</button>
+  </div>
+</div>
+
+<div class="modal" id="modal"><div class="sheet" id="sheet"></div></div>
+<div id="busy"><span id="busyTxt">جاري إنشاء PDF...</span></div>
+<div id="toast"></div>
+
+<script>
+/* ============================================================
+   English Exam Maker Pro — نسخة الموبايل (PWA)
+   إعداد وتطوير: سجاد الزويني
+   ============================================================ */
+const DEV_NAME = "سجاد الزويني";
+const DEV_CONTACTS = ["07XXXXXXXXX", "Telegram: @your_user", "Insta: @your_page"];
+const TRIAL_SECONDS = 60 * 60;
+const LICENSE_SECRET = "CHANGE-THIS-SECRET-Sajad-2026";   // نفس القيمة الموجودة بـ exam_core.py
+const SESSION_VER = "2";
+const PALETTE = ["#000000","#434343","#7f7f7f","#ffffff","#8b0000","#c00000","#ff0000","#ff6600",
+  "#ffc000","#bf9000","#00b050","#007a33","#1f5aa6","#0070c0","#00b0f0","#002060",
+  "#7030a0","#c71585","#ff66cc","#6d4c41"];
+
+const $ = s => document.querySelector(s);
+const LS = {
+  get(k, d){ try{ const v = localStorage.getItem("eem_" + k); return v === null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem("eem_" + k, JSON.stringify(v)); }catch(e){} }
+};
+
+function defaultExam(){
+  return {
+    header:{ right:"AL-NOOR AL-MUBEEN\nINTERMEDIATE",
+             center:"END-YEAR\nEXAMINATION\nIN ENGLISH\n2025 – 2026",
+             left:"DATE \\ 2026 \\ 4 \\ 26\nTIME \\ 1:30 HOURS\nCLASS \\ 2ND CLASS" },
+    teacher:"", wishes:"With best wishes for success", admin_sig:true,
+    font_px:13, line_spacing:1.35,
+    text_color:"#000000", title_color:"#1f5aa6", header_color:"#000000",
+    questions:[ newQuestion() ]
+  };
+}
+function newQuestion(){ return {title:"", mark:"", passage:"", items:[{num:"1", text:"", mark:""}]}; }
+
+let D = (LS.get("session_ver") === SESSION_VER && LS.get("session")) || defaultExam();
+D = Object.assign(defaultExam(), D);
+LS.set("session_ver", SESSION_VER);
+let lastName = LS.get("last_name", "");
+
+/* ============ أدوات النص ============ */
+const esc = s => (s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+  .replace(/ {2,}/g, m => " " + "&nbsp;".repeat(m.length - 1));
+const COLOR_OPEN_RX = "\\[color=#[0-9a-fA-F]{6}\\]", COLOR_CLOSE_RX = "\\[/color\\]";
+function applyFmt(s){
+  for (const t of ["b","i","u"]){
+    const rx = new RegExp("\\[" + t + "\\]([\\s\\S]*?)\\[/" + t + "\\]", "gi");
+    let p; do { p = s; s = s.replace(rx, "<" + t + ">$1</" + t + ">"); } while (p !== s);
+  }
+  const crx = /\[color=(#[0-9a-fA-F]{6})\]([\s\S]*?)\[\/color\]/gi;
+  let p; do { p = s; s = s.replace(crx, '<span style="color:$1">$2</span>'); } while (p !== s);
+  return s;
+}
+const stripFmt = s => (s || "").replace(/\[\/?[biu]\]/gi, "").replace(new RegExp(COLOR_OPEN_RX + "|" + COLOR_CLOSE_RX, "gi"), "");
+const hasText = s => stripFmt(s).trim().length > 0;
+const fx = s => applyFmt(esc(s));
+const linesHtml = s => applyFmt((s || "").split("\n").map(esc).join("<br>"));
+const colorOk = (c, d) => /^#[0-9a-fA-F]{6}$/.test(c || "") ? c : d;
+function normMark(m){
+  m = (m || "").trim().replace(/^\(+|\)+$/g, "").trim();
+  if (!m) return "";
+  if (/^\d+(\.\d+)?$/.test(m)) m += "M";
+  return "(" + m + ")";
+}
+
+/* ============ المحرر ============ */
+function getP(path){ return path.split(".").reduce((o, k) => o == null ? o : o[k], D); }
+function setP(path, v){
+  const ks = path.split("."); let o = D;
+  for (let i = 0; i < ks.length - 1; i++) o = o[ks[i]];
+  o[ks[ks.length - 1]] = v;
+}
+
+function renderQuestions(){
+  const box = $("#questions");
+  box.innerHTML = D.questions.map((q, i) => `
+    <div class="q" data-qi="${i}">
+      <div class="qtop"><span class="qlbl">Q${i + 1}\\</span>
+        <button class="del" data-act="delQ" data-qi="${i}">Delete</button></div>
+      <div class="qmid">
+        <input type="text" placeholder="Question title  e.g. UNSEEN PASSAGE : ..." data-p="questions.${i}.title">
+        <input type="text" class="mark" placeholder="Mark (10M)" data-p="questions.${i}.mark">
+      </div>
+      <textarea rows="3" placeholder="Passage text or instructions (اختياري)..." data-p="questions.${i}.passage"></textarea>
+      ${q.items.map((it, j) => `
+        <div class="item">
+          <button class="x" data-act="delItem" data-qi="${i}" data-ij="${j}">✕</button>
+          <input type="text" class="num" inputmode="text" data-p="questions.${i}.items.${j}.num">
+          <input type="text" placeholder="Sub-item text ..." data-p="questions.${i}.items.${j}.text">
+          <input type="text" class="mark" placeholder="Mark (2M)" data-p="questions.${i}.items.${j}.mark">
+        </div>`).join("")}
+      <button class="sub" dir="ltr" data-act="addItem" data-qi="${i}">+ Add Sub-Item</button>
+    </div>`).join("");
+  fillInputs(box);
+}
+function fillInputs(root){
+  root.querySelectorAll("[data-p]").forEach(el => {
+    const v = getP(el.dataset.p);
+    if (el.type === "checkbox") el.checked = !!v;
+    else el.value = v == null ? "" : v;
+  });
+}
+function renderSteppers(){
+  $("#fontOut").textContent = D.font_px + "px";
+  $("#lsOut").textContent = Number(D.line_spacing).toFixed(2);
+}
+
+document.addEventListener("input", e => {
+  const el = e.target;
+  if (!el.dataset || !el.dataset.p) return;
+  setP(el.dataset.p, el.type === "checkbox" ? el.checked : el.value);
+  changed();
+});
+document.addEventListener("change", e => {
+  const el = e.target;
+  if (el.dataset && el.dataset.p && el.type === "checkbox"){ setP(el.dataset.p, el.checked); changed(); }
+});
+
+let saveT = null;
+function changed(){
+  clearTimeout(saveT);
+  saveT = setTimeout(() => LS.set("session", D), 500);
+  if ($("#tab-preview").classList.contains("on")) schedulePreview();
+}
+let pvT = null;
+function schedulePreview(){ clearTimeout(pvT); pvT = setTimeout(renderPreview, 150); }
+
+/* ============ الصفحات A4 ============ */
+const PAGE_H = 1123, CONTENT_H = 957;
+
+function buildBlocks(){
+  const tc = colorOk(D.text_color, "#000000"), link = colorOk(D.title_color, "#1f5aa6"), hc = colorOk(D.header_color, "#000000");
+  const px = +D.font_px, lh = +D.line_spacing;
+  const blocks = [];
+  const mk = (html, keep) => { const d = document.createElement("div"); d.innerHTML = html; d.style.color = tc; return {el: d, keep}; };
+
+  const hd = D.header;
+  blocks.push(mk(`<div class="hdr" style="font-size:${px + 1}px;line-height:1.45;color:${hc}">
+    <div style="text-align:left">${linesHtml(hd.left)}</div>
+    <div style="text-align:center">${linesHtml(hd.center)}</div>
+    <div style="text-align:right">${linesHtml(hd.right)}</div></div>`));
+
+  D.questions.forEach((q, i) => {
+    const qb = [];
+    qb.push(mk(`<div class="qt" style="font-size:${px}px;line-height:1.35">
+      <div class="tt"><b>Q${i + 1}\\ </b><u style="color:${link}">${fx(q.title)}</u></div>
+      <div class="m">${esc(normMark(q.mark))}</div></div>`, true));
+    if (hasText(q.passage)){
+      q.passage.split(/\n\s*\n/).forEach(par => {           // كل فقرة كتلة مستقلة
+        if (hasText(par)) qb.push(mk(`<p class="ps" style="font-size:${px}px;line-height:${lh}">${linesHtml(par)}</p>`));
+      });
+    }
+    q.items.forEach(it => {
+      if (!hasText(it.text)) return;
+      const num = (it.num || "").trim();
+      qb.push(mk(`<div class="it" style="font-size:${px}px;line-height:${lh}">
+        <div>${num ? "<b>" + esc(num) + ".</b> " : ""}${fx(it.text)}</div>
+        <div class="m" style="white-space:nowrap">${esc(normMark(it.mark))}</div></div>`));
+    });
+    qb[qb.length - 1].el.style.marginBottom = Math.round(px * 1.2) + "px";
+    blocks.push(...qb);
+  });
+  return blocks;
+}
+
+function newPage(host){
+  const p = document.createElement("div");
+  p.className = "page";
+  p.innerHTML = `<div class="frame"></div><div class="content"></div>`;
+  host.appendChild(p);
+  return p;
+}
+
+function paginate(){
+  const host = $("#render");
+  host.innerHTML = "";
+  const tc = colorOk(D.text_color, "#000000");
+  let page = newPage(host), content = page.querySelector(".content");
+  for (const b of buildBlocks()){
+    content.appendChild(b.el);
+    if (content.scrollHeight > CONTENT_H && content.children.length > 1){
+      content.removeChild(b.el);
+      const moved = [];
+      const last = content.lastElementChild;
+      if (last && last._keep && content.children.length > 1){ content.removeChild(last); moved.push(last); }
+      page = newPage(host); content = page.querySelector(".content");
+      moved.forEach(m => content.appendChild(m));
+      content.appendChild(b.el);
+    }
+    b.el._keep = b.keep;
+  }
+  const pages = host.querySelectorAll(".page");
+  const fs = +D.font_px + 0.7;
+  const last = pages[pages.length - 1];
+  const foot = document.createElement("div");
+  foot.className = "foot";
+  foot.style.fontSize = fs + "px"; foot.style.color = tc;
+  foot.innerHTML = `<div>Teacher: ${esc(stripFmt(D.teacher))}</div>
+    <div class="c">${hasText(D.wishes) ? esc(stripFmt(D.wishes)) : ""}</div>
+    <div class="r">${D.admin_sig ? "School Administration" : ""}</div>`;
+  last.appendChild(foot);
+  if (pages.length > 1) pages.forEach((p, i) => {
+    const n = document.createElement("div"); n.className = "pn"; n.textContent = `Page ${i + 1} of ${pages.length}`;
+    p.appendChild(n);
+  });
+  return pages;
+}
+
+function renderPreview(){
+  const pages = paginate();
+  const box = $("#pages");
+  box.innerHTML = "";
+  const w = Math.min(box.clientWidth - 16, 794);
+  const sc = w / 794;
+  pages.forEach(p => {
+    const wrap = document.createElement("div");
+    wrap.className = "pwrap";
+    wrap.style.width = (794 * sc) + "px";
+    wrap.style.height = (PAGE_H * sc) + "px";
+    const c = p.cloneNode(true);
+    c.style.transform = `scale(${sc})`;
+    wrap.appendChild(c);
+    box.appendChild(wrap);
+  });
+}
+
+/* ============ التنسيق (عريض/مائل/خط/لون) ============ */
+let lastEl = null, lastSel = [0, 0];
+const isEdit = el => el && (el.tagName === "TEXTAREA" || (el.tagName === "INPUT" && el.type === "text")) && el.dataset.p;
+document.addEventListener("focusin", e => { if (isEdit(e.target)) lastEl = e.target; });
+function rememberSel(){
+  const a = document.activeElement;
+  if (isEdit(a)){ lastEl = a; lastSel = [a.selectionStart, a.selectionEnd]; }
+}
+document.addEventListener("selectionchange", rememberSel);
+["keyup","mouseup","touchend","select"].forEach(ev => document.addEventListener(ev, rememberSel, true));
+
+function reEsc(s){ return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
+
+function wrapSel(o, c, orx, crx, toggle){
+  const w = lastEl;
+  if (!w || !document.body.contains(w)) { toast("اضغط على خانة وحدد النص أولاً"); return; }
+  const t = w.value;
+  let st = w === document.activeElement ? w.selectionStart : lastSel[0];
+  let en = w === document.activeElement ? w.selectionEnd : lastSel[1];
+  const sel = t.slice(st, en), remove = toggle || !o;
+  let nw, s0, ln;
+  if (st === en){
+    if (!o) return;
+    nw = t.slice(0, st) + o + c + t.slice(st); s0 = st + o.length; ln = 0;
+  } else {
+    const m = sel.match(new RegExp("^(?:" + orx + ")([\\s\\S]*)(?:" + crx + ")$", "i"));
+    const before = t.slice(0, st).match(new RegExp("(?:" + orx + ")$", "i"));
+    const after = t.slice(en).match(new RegExp("^(?:" + crx + ")", "i"));
+    if (m){
+      const inner = m[1], repl = remove ? inner : o + inner + c;
+      nw = t.slice(0, st) + repl + t.slice(en); s0 = st + (remove ? 0 : o.length); ln = inner.length;
+    } else if (before && after){
+      const b0 = st - before[0].length, repl = remove ? sel : o + sel + c;
+      nw = t.slice(0, b0) + repl + t.slice(en + after[0].length); s0 = b0 + (remove ? 0 : o.length); ln = sel.length;
+    } else if (!o){
+      const repl = sel.replace(new RegExp("(?:" + orx + ")|(?:" + crx + ")", "gi"), "");
+      nw = t.slice(0, st) + repl + t.slice(en); s0 = st; ln = repl.length;
+    } else {
+      nw = t.slice(0, st) + o + sel + c + t.slice(en); s0 = st + o.length; ln = sel.length;
+    }
+  }
+  if (nw === t) return;
+  w.value = nw;
+  setP(w.dataset.p, nw);
+  changed();
+  w.focus({preventScroll: true});
+  try { w.setSelectionRange(s0, s0 + ln); } catch(e){}
+  lastSel = [s0, s0 + ln];
+}
+function toggleFmt(tag){ const o = `[${tag}]`, c = `[/${tag}]`; wrapSel(o, c, reEsc(o), reEsc(c), true); }
+let curColor = LS.get("cur_color", "#c00000");
+function applyColor(col){
+  if (col){
+    curColor = col; LS.set("cur_color", col); $("#colorBar").style.background = col;
+    wrapSel(`[color=${col}]`, "[/color]", COLOR_OPEN_RX, COLOR_CLOSE_RX, false);
+  } else wrapSel("", "", COLOR_OPEN_RX, COLOR_CLOSE_RX, false);
+}
+
+/* الأزرار لازم ما تسحب التركيز من الخانة حتى يبقى التحديد */
+function noBlur(el, fn){
+  el.addEventListener("touchstart", e => { e.preventDefault(); fn(e); }, {passive: false});
+  el.addEventListener("mousedown", e => { e.preventDefault(); fn(e); });
+}
+document.querySelectorAll("[data-fmt]").forEach(b => noBlur(b, () => toggleFmt(b.dataset.fmt)));
+
+// لوحة الألوان
+const pal = $("#palette");
+$("#swatches").innerHTML = PALETTE.map(c => `<button class="sw" style="background:${c}" data-c="${c}"></button>`).join("");
+pal.querySelectorAll(".sw").forEach(b => noBlur(b, () => { pal.classList.remove("on"); applyColor(b.dataset.c); }));
+noBlur($("#removeColor"), () => { pal.classList.remove("on"); applyColor(null); });
+$("#customColor").addEventListener("change", e => { pal.classList.remove("on"); applyColor(e.target.value); });
+noBlur($("#colorBtn"), e => {
+  if (pal.classList.contains("on")){ pal.classList.remove("on"); return; }
+  const r = $("#colorBtn").getBoundingClientRect();
+  pal.classList.add("on");
+  const pw = pal.offsetWidth;
+  pal.style.top = (r.bottom + 6) + "px";
+  pal.style.left = Math.max(6, Math.min(window.innerWidth - pw - 6, r.left + r.width / 2 - pw / 2)) + "px";
+  $("#customColor").value = curColor;
+});
+document.addEventListener("click", e => {
+  if (pal.classList.contains("on") && !pal.contains(e.target) && !$("#colorBtn").contains(e.target)) pal.classList.remove("on");
+});
+
+// أزرار الحجم والتباعد
+document.querySelectorAll("[data-step]").forEach(b => noBlur(b, () => {
+  const [k, d] = b.dataset.step.split(":"); const dir = +d;
+  if (k === "font") D.font_px = Math.max(8, Math.min(30, +D.font_px + dir));
+  else D.line_spacing = Math.round(Math.max(1, Math.min(3, +D.line_spacing + dir * 0.05)) * 100) / 100;
+  renderSteppers(); changed();
+}));
+
+/* ============ الأزرار العامة ============ */
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act],[data-tab]");
+  if (!b) return;
+  if (b.dataset.tab) return switchTab(b.dataset.tab);
+  const qi = +b.dataset.qi, ij = +b.dataset.ij;
+  switch (b.dataset.act){
+    case "addQ": {
+      D.questions.push(newQuestion()); renderQuestions(); changed();
+      const card = document.querySelectorAll(".q")[D.questions.length - 1];
+      card.scrollIntoView({behavior: "smooth", block: "center"});
+      setTimeout(() => card.querySelector("input").focus({preventScroll: true}), 350);
+      break;
+    }
+    case "delQ": {
+      const name = stripFmt(D.questions[qi].title).trim() || `Q${qi + 1}`;
+      if (confirm(`حذف السؤال:\n${name} ؟`)){ D.questions.splice(qi, 1); renderQuestions(); changed(); }
+      break;
+    }
+    case "addItem": {
+      const q = D.questions[qi];
+      q.items.push({num: String(q.items.length + 1), text: "", mark: ""});
+      renderQuestions(); changed();
+      const rows = document.querySelectorAll(`.q[data-qi="${qi}"] .item`);
+      rows[rows.length - 1].querySelectorAll("input")[1].focus();
+      break;
+    }
+    case "delItem": {
+      const q = D.questions[qi];
+      q.items.splice(ij, 1);
+      q.items.forEach((it, k) => { if (/^\d+$/.test((it.num || "").trim())) it.num = String(k + 1); });
+      renderQuestions(); changed();
+      break;
+    }
+    case "pdf": exportPdf(); break;
+    case "more": openMore(); break;
+    case "save": saveExam(); break;
+    case "load": openLoad(); break;
+    case "activate": openActivation(); break;
+  }
+});
+
+function switchTab(t){
+  document.querySelectorAll(".tab").forEach(s => s.classList.toggle("on", s.id === "tab-" + t));
+  document.querySelectorAll("nav.bottom [data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === t));
+  pal.classList.remove("on");
+  window.scrollTo(0, 0);
+  if (t === "preview") renderPreview();
+}
+
+/* ============ نوافذ ============ */
+const modal = $("#modal"), sheet = $("#sheet");
+function openSheet(html){ sheet.innerHTML = html; modal.classList.add("on"); }
+function closeSheet(){ modal.classList.remove("on"); }
+modal.addEventListener("click", e => { if (e.target === modal) closeSheet(); });
+function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("on"), 2200); }
+
+function openMore(){
+  openSheet(`<h3>المزيد</h3><div class="menu">
+    <button id="mSave">💾 حفظ النموذج</button>
+    <button id="mLoad">📂 استرجاع نموذج سابق</button>
+    <button id="mNew">🗒 ورقة جديدة (تبقى الترويسة)</button>
+    <button id="mPrint">🖨 طباعة مباشرة</button>
+    <button id="mAct">🔑 شراء وتفعيل دائم</button>
+    <button id="mAbout">ℹ️ حول البرنامج</button></div>`);
+  $("#mSave").onclick = () => { closeSheet(); saveExam(); };
+  $("#mLoad").onclick = () => { closeSheet(); openLoad(); };
+  $("#mNew").onclick = () => {
+    if (!confirm("مسح جميع الأسئلة والبدء بورقة جديدة؟\n(الترويسة تبقى كما هي)")) return;
+    D.questions = [newQuestion()]; lastName = ""; LS.set("last_name", "");
+    renderQuestions(); changed(); closeSheet(); switchTab("edit"); toast("تم إنشاء ورقة جديدة");
+  };
+  $("#mPrint").onclick = () => { closeSheet(); if (guard()){ paginate(); setTimeout(() => window.print(), 100); } };
+  $("#mAct").onclick = () => { closeSheet(); openActivation(); };
+  $("#mAbout").onclick = () => openSheet(`<h3>English Exam Maker Pro</h3>
+    <p>إعداد وتطوير: <b>${DEV_NAME}</b></p><p style="direction:ltr;text-align:right">${DEV_CONTACTS.join("<br>")}</p>
+    <div class="btns"><button class="bg-gray" onclick="closeSheet()">إغلاق</button></div>`);
+}
+
+function getExams(){ return LS.get("exams", {}); }
+function saveExam(){
+  if (!guard()) return;
+  openSheet(`<h3>💾 حفظ النموذج</h3><label class="l">اسم النموذج:</label>
+    <input type="text" id="saveName" style="direction:rtl;text-align:right">
+    <div class="btns"><button class="bg-green" id="doSave">حفظ</button><button class="bg-gray" onclick="closeSheet()">إلغاء</button></div>`);
+  const inp = $("#saveName"); inp.value = lastName; setTimeout(() => inp.focus(), 50);
+  $("#doSave").onclick = () => {
+    const name = inp.value.trim();
+    if (!name) return inp.focus();
+    const ex = getExams();
+    if (ex[name] && name !== lastName && !confirm("يوجد نموذج بنفس الاسم، استبداله؟")) return;
+    ex[name] = {data: JSON.parse(JSON.stringify(D)), updated: new Date().toLocaleString("en-GB"), ts: Date.now()};
+    LS.set("exams", ex); lastName = name; LS.set("last_name", name);
+    closeSheet(); toast(`تم حفظ النموذج (${name}) ✓`);
+  };
+}
+function openLoad(){
+  const draw = (q = "") => {
+    const ex = getExams();
+    const names = Object.keys(ex).filter(n => n.includes(q)).sort((a, b) => (ex[b].ts || 0) - (ex[a].ts || 0));
+    $("#list").innerHTML = names.length ? names.map(n => `<div class="e"><div class="n"><b>${esc(n)}</b><small>${esc(ex[n].updated || "")}</small></div>
+      <button class="bg-green" data-load="${encodeURIComponent(n)}">استرجاع</button>
+      <button class="bg-red" data-del="${encodeURIComponent(n)}">حذف</button></div>`).join("")
+      : `<p style="color:#777;text-align:center;padding:20px 0">لا توجد نماذج محفوظة بعد.<br>احفظ الورقة من زر 💾 حفظ.</p>`;
+  };
+  openSheet(`<h3>📂 استرجاع نموذج سابق</h3>
+    <input type="text" id="srch" placeholder="🔍 بحث باسم النموذج..." style="direction:rtl;text-align:right">
+    <div class="list" id="list"></div>
+    <div class="btns"><button class="bg-gray" onclick="closeSheet()">إغلاق</button></div>`);
+  draw();
+  $("#srch").oninput = e => draw(e.target.value.trim());
+  $("#list").onclick = e => {
+    const l = e.target.dataset.load, d = e.target.dataset.del;
+    if (l){ const n = decodeURIComponent(l); D = Object.assign(defaultExam(), getExams()[n].data);
+      lastName = n; LS.set("last_name", n); LS.set("session", D);
+      renderAll(); closeSheet(); switchTab("edit"); toast(`تم استرجاع (${n})`); }
+    if (d){ const n = decodeURIComponent(d); if (confirm(`حذف النموذج (${n}) نهائياً؟`)){ const ex = getExams(); delete ex[n]; LS.set("exams", ex); draw($("#srch").value.trim()); } }
+  };
+}
+
+/* ============ PDF ============ */
+function busy(on, txt){ $("#busyTxt").textContent = txt || "جاري إنشاء PDF..."; $("#busy").classList.toggle("on", on); }
+const fileName = () => {
+  const first = (D.header.center || "").split("\n")[0].trim();
+  return ((lastName || ("English Exam - " + first)).replace(/[\\/:*?"<>|\n\r]+/g, " ").trim() || "exam") + ".pdf";
+};
+
+async function exportPdf(){
+  if (!guard()) return;
+  if (!window.html2canvas || !window.jspdf){
+    if (confirm("مكتبة PDF لم تُحمَّل (تحتاج إنترنت أول مرة).\nهل تريد الطباعة / الحفظ PDF من المتصفح بدلاً عنها؟")){ paginate(); setTimeout(() => window.print(), 100); }
+    return;
+  }
+  busy(true);
+  try {
+    await (document.fonts ? document.fonts.ready : Promise.resolve());
+    const pages = paginate();
+    const host = $("#render");
+    const sy = window.scrollY;
+    window.scrollTo(0, 0);
+    Object.assign(host.style, {position: "absolute", left: "0", top: "0", zIndex: "-1"});   // html2canvas يحتاج العنصر داخل الصفحة
+    const pdf = new window.jspdf.jsPDF({unit: "mm", format: "a4", compress: true});
+    for (let i = 0; i < pages.length; i++){
+      busy(true, `جاري إنشاء PDF... (${i + 1}/${pages.length})`);
+      const cv = await html2canvas(pages[i], {scale: 2.2, backgroundColor: "#ffffff", useCORS: true, logging: false,
+        windowWidth: Math.max(794, window.innerWidth), windowHeight: Math.max(PAGE_H, window.innerHeight),
+        width: 794, height: PAGE_H, scrollX: 0, scrollY: 0});
+      if (i) pdf.addPage();
+      pdf.addImage(cv.toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, 210, 297);
+    }
+    Object.assign(host.style, {position: "", left: "", top: "", zIndex: ""});
+    window.scrollTo(0, sy);
+    const blob = pdf.output("blob");
+    busy(false);
+    showPdfReady(blob, pdf);
+  } catch (err){
+    busy(false); Object.assign($("#render").style, {position: "", left: "", top: "", zIndex: ""});
+    alert("تعذر إنشاء PDF:\n" + err);
+  }
+}
+
+function showPdfReady(blob, pdf){
+  const name = fileName();
+  const file = new File([blob], name, {type: "application/pdf"});
+  const canShare = navigator.canShare && navigator.canShare({files: [file]});
+  openSheet(`<h3>✅ ملف PDF جاهز</h3><p style="direction:ltr;text-align:right">${esc(name)}</p>
+    <p style="color:#555;font-size:13px">من المشاركة تكدر تحفظه بالملفات، تطبعه، أو ترسله واتساب.</p>
+    <div class="btns">
+      ${canShare ? `<button class="bg-blue" id="pShare">📤 مشاركة / حفظ</button>` : ""}
+      <button class="bg-green" id="pOpen">👁 فتح الملف</button>
+      <button class="bg-orange" id="pDown">⬇️ تنزيل</button>
+      <button class="bg-gray" onclick="closeSheet()">إغلاق</button></div>`);
+  if (canShare) $("#pShare").onclick = () => navigator.share({files: [file], title: name}).catch(() => {});
+  $("#pOpen").onclick = () => { const u = URL.createObjectURL(blob); window.open(u, "_blank") || (location.href = u); };
+  $("#pDown").onclick = () => pdf.save(name);
+}
+
+/* ============ التجربة والتفعيل ============ */
+let used = +LS.get("used", 0);
+let activated = false;
+
+function machineId(){
+  let m = LS.get("mid", "");
+  if (!m){
+    const a = new Uint8Array(8); crypto.getRandomValues(a);
+    const h = Array.from(a, x => x.toString(16).padStart(2, "0")).join("").toUpperCase();
+    m = [h.slice(0,4), h.slice(4,8), h.slice(8,12), h.slice(12,16)].join("-");
+    LS.set("mid", m);
+  }
+  return m;
+}
+async function makeKey(mid){
+  const enc = new TextEncoder();
+  const k = await crypto.subtle.importKey("raw", enc.encode(LICENSE_SECRET), {name: "HMAC", hash: "SHA-256"}, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", k, enc.encode(mid.trim().toUpperCase()));
+  const h = Array.from(new Uint8Array(sig), x => x.toString(16).padStart(2, "0")).join("").toUpperCase();
+  return [h.slice(0,5), h.slice(5,10), h.slice(10,15), h.slice(15,20)].join("-");
+}
+async function checkKey(key){
+  if (!key || !crypto.subtle) return false;
+  const good = (await makeKey(machineId())).replace(/[^A-Z0-9]/g, "");
+  return key.toUpperCase().replace(/[^A-Z0-9]/g, "") === good;
+}
+function setBars(){
+  const a = $("#appbar").offsetHeight, t = activated ? 0 : $("#trial").offsetHeight;
+  document.documentElement.style.setProperty("--app-h", a + "px");
+  document.documentElement.style.setProperty("--bar-h", (a + t) + "px");
+}
+function updateLicenseUI(){
+  $("#trial").style.display = activated ? "none" : "flex";
+  $("#okLbl").style.display = activated ? "inline" : "none";
+  if (activated) return setBars();
+  const left = Math.max(0, TRIAL_SECONDS - used);
+  $("#trialTxt").textContent = left > 0
+    ? `⏳ نسخة تجريبية | الوقت المتبقي: ${String(Math.floor(left / 60)).padStart(2, "0")}:${String(left % 60).padStart(2, "0")}`
+    : "⛔ انتهت الفترة التجريبية - يرجى التفعيل";
+  if (!setBars._done){ setBars(); setBars._done = true; }
+
+}
+function guard(){
+  if (activated || used < TRIAL_SECONDS) return true;
+  alert("انتهت ساعة الاستخدام التجريبية.\nيرجى شراء وتفعيل النسخة الكاملة.");
+  openActivation();
+  return false;
+}
+function openActivation(){
+  const mid = machineId();
+  openSheet(`<h3>🔑 تفعيل النسخة الكاملة</h3>
+    <p>أرسل <b>رمز الجهاز</b> إلى المطوّر للحصول على كود التفعيل:</p>
+    <p style="direction:ltr;text-align:right;color:#1f6fb5;font-weight:bold">${DEV_CONTACTS.join(" | ")}</p>
+    <label class="l">رمز الجهاز:</label><div class="mid" id="midBox">${mid}</div>
+    <div class="btns"><button class="bg-blue" id="cpMid">📋 نسخ الرمز</button></div>
+    <label class="l" style="margin-top:12px">كود التفعيل:</label>
+    <input type="text" id="keyIn" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" autocapitalize="characters" style="font-family:Consolas,monospace;text-align:center">
+    <div class="btns"><button class="bg-green" id="doAct">تفعيل الآن</button><button class="bg-gray" onclick="closeSheet()">إغلاق</button></div>`);
+  $("#cpMid").onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(mid) : Promise.reject()).then(() => toast("تم نسخ الرمز ✓")).catch(() => toast("اضغط مطولاً على الرمز للنسخ")); };
+  $("#doAct").onclick = async () => {
+    const k = $("#keyIn").value.trim();
+    if (await checkKey(k)){ LS.set("key", k.toUpperCase()); activated = true; updateLicenseUI(); closeSheet(); alert("تم تفعيل البرنامج بنجاح ✓\nشكراً لثقتك."); }
+    else alert("كود التفعيل غير صحيح لهذا الجهاز.");
+  };
+}
+setInterval(() => {
+  if (activated || document.visibilityState !== "visible" || used >= TRIAL_SECONDS) return;
+  used++;
+  if (used % 5 === 0) LS.set("used", used);
+  updateLicenseUI();
+}, 1000);
+document.addEventListener("visibilitychange", () => { if (!activated) LS.set("used", used); if (document.visibilityState === "hidden") LS.set("session", D); });
+
+/* ============ بدء التشغيل ============ */
+function renderAll(){
+  fillInputs($("#tab-edit"));
+  renderQuestions();
+  renderSteppers();
+}
+$("#devline").textContent = "إعداد وتطوير: " + DEV_NAME;
+$("#colorBar").style.background = curColor;
+renderAll();
+updateLicenseUI();
+checkKey(LS.get("key", "")).then(ok => { activated = ok; updateLicenseUI(); });
+window.addEventListener("resize", () => { setBars(); if ($("#tab-preview").classList.contains("on")) schedulePreview(); });
+
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+</script>
+</body>
+</html>
