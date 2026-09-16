@@ -88,6 +88,11 @@ textarea{resize:vertical;line-height:1.35}
 .lvl1 .ind{background:#dff0e2}
 .subbtns{display:flex;gap:6px;flex-wrap:wrap}
 .sub.pt{background:#5b6b8c}
+.seprow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid #dde0d6;direction:rtl;font-size:13px;color:#333}
+.seprow .seg button{font-family:inherit;padding:6px 10px}
+.qsep{margin:4px 18px 0;height:0}
+.qsep.solid{border-top:2px solid #444}
+.qsep.dashed{border-top:2px dashed #444}
 .x{background:#d0333b;color:#fff;border:0;border-radius:4px;height:36px;font-weight:bold;font-size:15px;padding:0}
 .item input{padding:7px 5px}
 .num{text-align:center!important}
@@ -359,7 +364,11 @@ function renderQuestions(){
         <button class="sub" data-act="addItem" data-qi="${i}">+ Add Sub-Item</button>
         <button class="sub pt" data-act="addPoint" data-qi="${i}">+ Add Point (${subStyleName(q.numbering)})</button>
       </div>
-    </div>`).join("");
+      <div class="seprow"><span>➖ فاصل بعد السؤال:</span>
+        <div class="seg">${[["", "بدون"], ["solid", "━ خط"], ["dashed", "┅ متقطع"]].map(([k, t]) =>
+          `<button class="${(q.sep || "") === k ? "on" : ""}" data-act="sep" data-qi="${i}" data-style="${k}">${t}</button>`).join("")}</div>
+      </div>
+    </div>${q.sep ? `<div class="qsep ${q.sep}"></div>` : ""}`).join("");
   fillInputs(box);
 }
 function fillInputs(root){
@@ -401,7 +410,7 @@ function buildBlocks(){
   const tc = colorOk(D.text_color, "#000000"), link = colorOk(D.title_color, "#1f5aa6"), hc = colorOk(D.header_color, "#000000");
   const px = +D.font_px, lh = +D.line_spacing;
   const blocks = [];
-  const mk = (html, keep) => { const d = document.createElement("div"); d.innerHTML = html; d.style.color = tc; return {el: d, keep}; };
+  const mk = (html, keep, sep) => { const d = document.createElement("div"); d.innerHTML = html; d.style.color = tc; return {el: d, keep, sep}; };
 
   const hd = D.header;
   blocks.push(mk(`<div class="hdr" style="font-size:${px + 1}px;line-height:1.45;color:${hc}">
@@ -428,7 +437,12 @@ function buildBlocks(){
         <div>${num ? "<b>" + esc(num) + ".</b> " : ""}${fx(it.text)}</div>
         <div class="m" style="white-space:nowrap">${esc(normMark(it.mark))}</div></div>`, keep));
     });
-    qb[qb.length - 1].el.style.marginBottom = Math.round(px * 1.2) + "px";
+    if (q.sep === "solid" || q.sep === "dashed"){
+      qb[qb.length - 1].el.style.marginBottom = Math.round(px * 0.7) + "px";
+      qb.push(mk(`<div style="border-top:1.3px ${q.sep} ${tc};margin:0 0 ${Math.round(px * 0.9)}px"></div>`, false, true));
+    } else {
+      qb[qb.length - 1].el.style.marginBottom = Math.round(px * 1.2) + "px";
+    }
     blocks.push(...qb);
   });
   return blocks;
@@ -448,7 +462,9 @@ function paginate(){
   const tc = colorOk(D.text_color, "#000000");
   let page = newPage(host), content = page.querySelector(".content");
   for (const b of buildBlocks()){
+    if (b.sep && content.children.length === 0) continue;          // فاصل ما يبدي بيه صفحة
     content.appendChild(b.el);
+    if (b.sep && content.scrollHeight > CONTENT_H){ content.removeChild(b.el); continue; }   // فاصل بنهاية الصفحة ينشال
     if (content.scrollHeight > CONTENT_H && content.children.length > 1){
       content.removeChild(b.el);
       const moved = [];
@@ -644,6 +660,11 @@ document.addEventListener("click", e => {
       const q = D.questions[qi];
       q.items.splice(ij, 1);
       renumber(q);
+      renderQuestions(); changed();
+      break;
+    }
+    case "sep": {
+      D.questions[qi].sep = b.dataset.style;
       renderQuestions(); changed();
       break;
     }
