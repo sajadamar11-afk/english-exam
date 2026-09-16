@@ -56,8 +56,9 @@ button,a.btn{border:0;border-radius:8px;padding:12px 14px;font-weight:bold;font-
     <p class="hint">نفس قيمة <b dir="ltr">LICENSE_SECRET</b> الموجودة بالبرنامج. تنحفظ بهذا الجهاز فقط، والصفحة نفسها ما بيها أي سر.</p>
     <label>كلمة السر:</label>
     <input id="secIn" class="code" style="text-transform:none" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <p class="hint">البصمة: <b id="fpLive" dir="ltr">—</b></p>
-    <button class="b-green full" id="saveSec">حفظ ومتابعة</button>
+    <p class="hint">البصمة: <b id="fpLive" dir="ltr">—</b> <span id="fpState"></span></p>
+    <p class="bad" id="lockMsg" style="display:none;font-size:13px">كلمة السر المحفوظة سابقاً كانت غلط وانمسحت، أدخلها من جديد.</p>
+    <button class="b-green full" id="saveSec" disabled style="opacity:.5">حفظ ومتابعة</button>
   </div>
 </section>
 
@@ -107,6 +108,11 @@ const set = (k, v) => localStorage.setItem(K + k, JSON.stringify(v));
 const esc = s => (s || "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function toast(m){ const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(t.h); t.h = setTimeout(() => t.classList.remove("on"), 1800); }
 
+const EXPECTED_FP = "2D8D-B570";   // بصمة كلمة السر الصحيحة (مو السر نفسه)
+// ينظف أي رموز مخفية أو شرطات غريبة تنلصق من الواتساب/المحادثات
+function cleanSecret(s){
+  return (s || "").normalize("NFKC").replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-").replace(/[^A-Za-z0-9-]/g, "");
+}
 const hex = buf => Array.from(new Uint8Array(buf), x => x.toString(16).padStart(2, "0")).join("").toUpperCase();
 async function fingerprint(sec){
   if (!sec) return "—";
@@ -126,16 +132,27 @@ function normMid(s){
 
 /* ---------- كلمة السر ---------- */
 async function showState(){
-  const sec = get("secret", "");
+  let sec = get("secret", "");
+  if (sec && await fingerprint(sec) !== EXPECTED_FP){      // محفوظة غلط -> نمسحها
+    localStorage.removeItem(K + "secret"); sec = "";
+    $("#lockMsg").style.display = "block";
+  }
   $("#lock").style.display = sec ? "none" : "block";
   $("#main").style.display = sec ? "block" : "none";
   if (sec){ $("#fpSaved").textContent = await fingerprint(sec); drawHist(); }
 }
-$("#secIn").addEventListener("input", async e => { $("#fpLive").textContent = await fingerprint(e.target.value.trim()); });
-$("#saveSec").onclick = () => {
-  const v = $("#secIn").value.trim();
-  if (v.length < 8) return toast("كلمة السر قصيرة");
-  set("secret", v); showState(); toast("تم الحفظ ✓");
+async function checkLive(){
+  const v = cleanSecret($("#secIn").value);
+  const f = await fingerprint(v), ok = f === EXPECTED_FP;
+  $("#fpLive").textContent = f;
+  $("#fpState").innerHTML = v ? (ok ? '<span class="ok">✓ صحيحة</span>' : '<span class="bad">✗ غلط</span>') : "";
+  $("#saveSec").disabled = !ok; $("#saveSec").style.opacity = ok ? 1 : .5;
+  return ok;
+}
+["input", "change", "paste", "keyup"].forEach(ev => $("#secIn").addEventListener(ev, () => setTimeout(checkLive, 0)));
+$("#saveSec").onclick = async () => {
+  if (!await checkLive()) return toast("كلمة السر غلط");
+  set("secret", cleanSecret($("#secIn").value)); $("#lockMsg").style.display = "none"; showState(); toast("تم الحفظ ✓");
 };
 $("#resetSec").onclick = () => {
   if (!confirm("مسح كلمة السر المحفوظة وإدخال واحدة جديدة؟")) return;
@@ -187,7 +204,17 @@ $("#hist").onclick = e => {
   if (e.target.dataset.del && confirm("حذف هذا السجل؟")){ h.splice(+e.target.dataset.del, 1); set("hist", h); drawHist(); }
 };
 
-showState();
+// إعداد بضغطة وحدة: keygen.html#s=كلمة_السر
+(async () => {
+  const m = location.hash.match(/[#&]s=([^&]+)/);
+  if (m){
+    const v = cleanSecret(decodeURIComponent(m[1]));
+    history.replaceState(null, "", location.pathname);          // نشيل السر من الرابط
+    if (await fingerprint(v) === EXPECTED_FP){ set("secret", v); toast("تم حفظ كلمة السر ✓"); }
+    else toast("رابط الإعداد غير صحيح");
+  }
+  showState();
+})();
 </script>
 </body>
 </html>
