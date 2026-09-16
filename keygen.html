@@ -49,16 +49,14 @@ button,a.btn{border:0;border-radius:8px;padding:12px 14px;font-weight:bold;font-
 <body>
 <header><b>🔑 مولد أكواد التفعيل</b><small>English Exam Maker Pro — خاص بـ سجاد الزويني</small></header>
 
-<!-- ===== إدخال كلمة السر أول مرة ===== -->
+<!-- ===== رمز الدخول ===== -->
 <section id="lock" style="display:none">
-  <div class="box">
-    <h3>🔒 أدخل كلمة السر (مرة وحدة بس)</h3>
-    <p class="hint">نفس قيمة <b dir="ltr">LICENSE_SECRET</b> الموجودة بالبرنامج. تنحفظ بهذا الجهاز فقط، والصفحة نفسها ما بيها أي سر.</p>
-    <label>كلمة السر:</label>
-    <input id="secIn" class="code" style="text-transform:none" autocomplete="off" autocapitalize="off" spellcheck="false">
-    <p class="hint">البصمة: <b id="fpLive" dir="ltr">—</b> <span id="fpState"></span></p>
-    <p class="bad" id="lockMsg" style="display:none;font-size:13px">كلمة السر المحفوظة سابقاً كانت غلط وانمسحت، أدخلها من جديد.</p>
-    <button class="b-green full" id="saveSec" disabled style="opacity:.5">حفظ ومتابعة</button>
+  <div class="box" style="text-align:center">
+    <h3>🔒 رمز الدخول</h3>
+    <p class="hint">اكتب رمز الدخول (6 أرقام) مرة وحدة، وبعدها الصفحة تبقى مفتوحة بهذا الجهاز.</p>
+    <input id="pinIn" class="code" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12"
+      autocomplete="off" placeholder="● ● ● ● ● ●" style="font-size:28px;letter-spacing:8px;margin-top:10px">
+    <p class="bad" id="pinErr" style="display:none;margin-top:10px">الرمز غلط</p>
   </div>
 </section>
 
@@ -93,8 +91,8 @@ button,a.btn{border:0;border-radius:8px;padding:12px 14px;font-weight:bold;font-
   </div>
 
   <div class="box">
-    <p class="hint">بصمة كلمة السر المحفوظة: <b id="fpSaved" dir="ltr"></b></p>
-    <button class="b-red" id="resetSec" style="margin-top:8px;font-size:13px;padding:9px 12px">تغيير كلمة السر</button>
+    <p class="hint">بصمة كلمة السر: <b id="fpSaved" dir="ltr"></b></p>
+    <button class="b-red" id="resetSec" style="margin-top:8px;font-size:13px;padding:9px 12px">🔒 قفل الصفحة</button>
   </div>
 </section>
 
@@ -108,11 +106,11 @@ const set = (k, v) => localStorage.setItem(K + k, JSON.stringify(v));
 const esc = s => (s || "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function toast(m){ const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(t.h); t.h = setTimeout(() => t.classList.remove("on"), 1800); }
 
-const EXPECTED_FP = "2D8D-B570";   // بصمة كلمة السر الصحيحة (مو السر نفسه)
-// ينظف أي رموز مخفية أو شرطات غريبة تنلصق من الواتساب/المحادثات
-function cleanSecret(s){
-  return (s || "").normalize("NFKC").replace(/[\u2010-\u2015\u2212\uFE58\uFE63\uFF0D]/g, "-").replace(/[^A-Za-z0-9-]/g, "");
-}
+// كلمة السر نفسها موجودة بالتطبيق (index.html) وبرنامج الحاسبة
+const LICENSE_SECRET = "SZ-jKn85yMi0yUmjNvACriTmLqb";
+const PIN_HASH = "2b039d848521d817f460c856b3b0c363571c498d96bc7c9ba5dbde085ac1e740";
+const toLatinDigits = s => (s || "").replace(/[\u0660-\u0669]/g, d => d.charCodeAt(0) - 0x0660)
+                                    .replace(/[\u06F0-\u06F9]/g, d => d.charCodeAt(0) - 0x06F0);
 const hex = buf => Array.from(new Uint8Array(buf), x => x.toString(16).padStart(2, "0")).join("").toUpperCase();
 async function fingerprint(sec){
   if (!sec) return "—";
@@ -130,34 +128,24 @@ function normMid(s){
   return c.length === 16 ? [c.slice(0,4), c.slice(4,8), c.slice(8,12), c.slice(12,16)].join("-") : null;
 }
 
-/* ---------- كلمة السر ---------- */
+/* ---------- رمز الدخول ---------- */
+async function sha(t){ return hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(t))).toLowerCase(); }
 async function showState(){
-  let sec = get("secret", "");
-  if (sec && await fingerprint(sec) !== EXPECTED_FP){      // محفوظة غلط -> نمسحها
-    localStorage.removeItem(K + "secret"); sec = "";
-    $("#lockMsg").style.display = "block";
-  }
-  $("#lock").style.display = sec ? "none" : "block";
-  $("#main").style.display = sec ? "block" : "none";
-  if (sec){ $("#fpSaved").textContent = await fingerprint(sec); drawHist(); }
+  const ok = get("unlocked", "") === PIN_HASH;
+  $("#lock").style.display = ok ? "none" : "block";
+  $("#main").style.display = ok ? "block" : "none";
+  if (ok){ $("#fpSaved").textContent = await fingerprint(LICENSE_SECRET); drawHist(); }
+  else setTimeout(() => $("#pinIn").focus(), 200);
 }
-async function checkLive(){
-  const v = cleanSecret($("#secIn").value);
-  const f = await fingerprint(v), ok = f === EXPECTED_FP;
-  $("#fpLive").textContent = f;
-  $("#fpState").innerHTML = v ? (ok ? '<span class="ok">✓ صحيحة</span>' : '<span class="bad">✗ غلط</span>') : "";
-  $("#saveSec").disabled = !ok; $("#saveSec").style.opacity = ok ? 1 : .5;
-  return ok;
-}
-["input", "change", "paste", "keyup"].forEach(ev => $("#secIn").addEventListener(ev, () => setTimeout(checkLive, 0)));
-$("#saveSec").onclick = async () => {
-  if (!await checkLive()) return toast("كلمة السر غلط");
-  set("secret", cleanSecret($("#secIn").value)); $("#lockMsg").style.display = "none"; showState(); toast("تم الحفظ ✓");
-};
-$("#resetSec").onclick = () => {
-  if (!confirm("مسح كلمة السر المحفوظة وإدخال واحدة جديدة؟")) return;
-  localStorage.removeItem(K + "secret"); $("#secIn").value = ""; $("#fpLive").textContent = "—"; showState();
-};
+$("#pinIn").addEventListener("input", async e => {
+  const pin = toLatinDigits(e.target.value).replace(/\D/g, "");
+  $("#pinErr").style.display = "none";
+  if (pin.length < 6) return;
+  if (await sha("eem-pin:" + pin) === PIN_HASH){
+    set("unlocked", PIN_HASH); e.target.value = ""; e.target.blur(); showState(); toast("تم فتح الصفحة ✓");
+  } else if (pin.length >= 6){ $("#pinErr").style.display = "block"; }
+});
+$("#resetSec").onclick = () => { localStorage.removeItem(K + "unlocked"); showState(); };
 
 /* ---------- التوليد ---------- */
 let current = null;
@@ -174,7 +162,7 @@ $("#gen").onclick = async () => {
   const mid = normMid(found ? found[0] : raw);
   if (!mid){ $("#err").textContent = "رمز الجهاز غير صحيح. لازم يكون 16 حرف/رقم مثل: A1B2-C3D4-E5F6-7890"; $("#err").style.display = "block"; return; }
   $("#mid").value = mid;
-  const key = await makeKey(get("secret", ""), mid);
+  const key = await makeKey(LICENSE_SECRET, mid);
   current = {mid, key, name, date: new Date().toLocaleString("en-GB")};
   const h = get("hist", []).filter(x => x.mid !== mid);
   h.unshift(current); set("hist", h.slice(0, 300));
@@ -204,17 +192,7 @@ $("#hist").onclick = e => {
   if (e.target.dataset.del && confirm("حذف هذا السجل؟")){ h.splice(+e.target.dataset.del, 1); set("hist", h); drawHist(); }
 };
 
-// إعداد بضغطة وحدة: keygen.html#s=كلمة_السر
-(async () => {
-  const m = location.hash.match(/[#&]s=([^&]+)/);
-  if (m){
-    const v = cleanSecret(decodeURIComponent(m[1]));
-    history.replaceState(null, "", location.pathname);          // نشيل السر من الرابط
-    if (await fingerprint(v) === EXPECTED_FP){ set("secret", v); toast("تم حفظ كلمة السر ✓"); }
-    else toast("رابط الإعداد غير صحيح");
-  }
-  showState();
-})();
+showState();
 </script>
 </body>
 </html>
