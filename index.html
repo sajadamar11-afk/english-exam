@@ -123,6 +123,7 @@ nav.bottom button.pdf{color:#fff;background:var(--blue);margin:5px 6px;border-ra
 .sheet p{margin:6px 0;font-size:14px}
 .sheet .btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
 .sheet .btns button{flex:1;border:0;border-radius:7px;padding:12px;font-weight:bold;font-size:14px;color:#fff;min-width:120px}
+.sheet .btns a.wa{flex:1;min-width:120px;background:#25D366;color:#fff;text-decoration:none;text-align:center;border-radius:7px;padding:12px;font-weight:bold;font-size:14px}
 .bg-green{background:var(--green)}.bg-blue{background:var(--blue)}.bg-gray{background:#6b7280}.bg-red{background:#d0333b}.bg-orange{background:var(--orange)}
 .mid{font-family:Consolas,monospace;font-size:18px;font-weight:bold;direction:ltr;text-align:center;background:#f3f4f6;border-radius:6px;padding:10px;letter-spacing:1px;user-select:all}
 .list{margin-top:8px}
@@ -232,12 +233,14 @@ nav.bottom button.pdf{color:#fff;background:var(--blue);margin:5px 6px;border-ra
 <script>
 /* ============================================================
    English Exam Maker Pro — نسخة الموبايل (PWA)
-   إعداد وتطوير: سجاد الزويني
+   تطوير وتصميم: سجاد الزويني
    ============================================================ */
 const DEV_NAME = "سجاد الزويني";
-const DEV_CONTACTS = ["07XXXXXXXXX", "Telegram: @your_user", "Insta: @your_page"];
+const DEV_PHONE = "07705686013";
+const DEV_WHATSAPP = "9647705686013";
+const DEV_CONTACTS = [DEV_PHONE];
 const TRIAL_SECONDS = 60 * 60;
-const LICENSE_SECRET = "CHANGE-THIS-SECRET-Sajad-2026";   // نفس القيمة الموجودة بـ exam_core.py
+const LICENSE_SECRET = "SZ-jKn85yMi0yUmjNvACriTmLqb";   // نفس القيمة الموجودة بـ exam_core.py
 const SESSION_VER = "2";
 const PALETTE = ["#000000","#434343","#7f7f7f","#ffffff","#8b0000","#c00000","#ff0000","#ff6600",
   "#ffc000","#bf9000","#00b050","#007a33","#1f5aa6","#0070c0","#00b0f0","#002060",
@@ -620,7 +623,8 @@ function openMore(){
   $("#mPrint").onclick = () => { closeSheet(); if (guard()){ paginate(); setTimeout(() => window.print(), 100); } };
   $("#mAct").onclick = () => { closeSheet(); openActivation(); };
   $("#mAbout").onclick = () => openSheet(`<h3>English Exam Maker Pro</h3>
-    <p>إعداد وتطوير: <b>${DEV_NAME}</b></p><p style="direction:ltr;text-align:right">${DEV_CONTACTS.join("<br>")}</p>
+    <p>تطوير وتصميم: <b>${DEV_NAME}</b></p><p style="direction:ltr;text-align:right;font-weight:bold">📞 ${DEV_PHONE}</p>
+    <div class="btns"><a class="wa" href="https://wa.me/${DEV_WHATSAPP}" target="_blank">📲 مراسلة واتساب</a></div>
     <div class="btns"><button class="bg-gray" onclick="closeSheet()">إغلاق</button></div>`);
 }
 
@@ -774,12 +778,14 @@ function openActivation(){
   const mid = machineId();
   openSheet(`<h3>🔑 تفعيل النسخة الكاملة</h3>
     <p>أرسل <b>رمز الجهاز</b> إلى المطوّر للحصول على كود التفعيل:</p>
-    <p style="direction:ltr;text-align:right;color:#1f6fb5;font-weight:bold">${DEV_CONTACTS.join(" | ")}</p>
+    <p style="color:#1f6fb5;font-weight:bold">📞 <span dir="ltr">${DEV_PHONE}</span> — ${DEV_NAME}</p>
     <label class="l">رمز الجهاز:</label><div class="mid" id="midBox">${mid}</div>
-    <div class="btns"><button class="bg-blue" id="cpMid">📋 نسخ الرمز</button></div>
+    <div class="btns"><a class="wa" id="waMid" target="_blank">📲 إرسال الرمز واتساب</a><button class="bg-blue" id="cpMid">📋 نسخ الرمز</button></div>
     <label class="l" style="margin-top:12px">كود التفعيل:</label>
     <input type="text" id="keyIn" placeholder="XXXXX-XXXXX-XXXXX-XXXXX" autocapitalize="characters" style="font-family:Consolas,monospace;text-align:center">
     <div class="btns"><button class="bg-green" id="doAct">تفعيل الآن</button><button class="bg-gray" onclick="closeSheet()">إغلاق</button></div>`);
+  $("#waMid").href = "https://wa.me/" + DEV_WHATSAPP + "?text=" + encodeURIComponent(
+    "مرحبا، أريد تفعيل برنامج English Exam Maker Pro على التلفون\nرمز الجهاز: " + mid);
   $("#cpMid").onclick = () => { (navigator.clipboard ? navigator.clipboard.writeText(mid) : Promise.reject()).then(() => toast("تم نسخ الرمز ✓")).catch(() => toast("اضغط مطولاً على الرمز للنسخ")); };
   $("#doAct").onclick = async () => {
     const k = $("#keyIn").value.trim();
@@ -801,7 +807,7 @@ function renderAll(){
   renderQuestions();
   renderSteppers();
 }
-$("#devline").textContent = "إعداد وتطوير: " + DEV_NAME;
+$("#devline").textContent = "تطوير وتصميم: " + DEV_NAME;
 $("#colorBar").style.background = curColor;
 renderAll();
 updateLicenseUI();

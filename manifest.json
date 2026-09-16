@@ -1,7 +1,7 @@
 {
   "name": "English Exam Maker Pro",
   "short_name": "Exam Maker",
-  "description": "برنامج كتابة أسئلة اللغة الإنجليزية - إعداد وتطوير سجاد الزويني",
+  "description": "برنامج كتابة أسئلة اللغة الإنجليزية - تطوير وتصميم سجاد الزويني",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

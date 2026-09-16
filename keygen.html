@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>مولد أكواد التفعيل</title>
+<meta name="theme-color" content="#1e2a45">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="أكواد التفعيل">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{--navy:#1e2a45;--blue:#1f6fb5;--green:#2e8b3a;--red:#d0333b;--bg:#e9ecef;--safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);font-family:"Segoe UI",Tahoma,-apple-system,sans-serif;color:#1b1b1b;padding-bottom:calc(20px + var(--safe-b))}
+header{background:var(--navy);color:#fff;padding:calc(var(--safe-t) + 12px) 14px 12px}
+header b{display:block;color:#f4d27a;font-size:17px}
+header small{color:#cfd8e8;font-size:12px}
+.box{background:#fff;margin:10px;border-radius:10px;padding:14px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+h3{margin:0 0 10px;font-size:15px;color:var(--navy)}
+label{display:block;font-size:13px;color:#444;margin:10px 0 4px}
+input{width:100%;font-size:18px;padding:11px;border:1px solid #a9aeb3;border-radius:7px;background:#fff}
+input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 2px rgba(31,111,181,.2)}
+.code{direction:ltr;text-align:center;font-family:Menlo,Consolas,monospace;letter-spacing:1px;text-transform:uppercase}
+.row{display:flex;gap:8px}
+.row input{flex:1}
+button,a.btn{border:0;border-radius:8px;padding:12px 14px;font-weight:bold;font-size:15px;color:#fff;cursor:pointer;text-decoration:none;text-align:center;font-family:inherit}
+.b-blue{background:var(--blue)}.b-green{background:var(--green)}.b-gray{background:#6b7280}.b-red{background:var(--red)}.b-wa{background:#25D366}
+.full{display:block;width:100%;margin-top:12px;font-size:17px;padding:14px}
+.result{display:none;margin-top:14px;background:#eef7ef;border:2px solid var(--green);border-radius:10px;padding:12px;text-align:center}
+.result.on{display:block}
+.key{font-family:Menlo,Consolas,monospace;font-size:21px;font-weight:bold;direction:ltr;letter-spacing:.5px;user-select:all;margin:6px 0 10px;word-break:break-all}
+.btns{display:flex;gap:8px;flex-wrap:wrap}.btns>*{flex:1;min-width:95px}
+.ok{color:var(--green);font-weight:bold}.bad{color:var(--red);font-weight:bold}
+.hint{font-size:12.5px;color:#666;margin:6px 0 0}
+.err{color:var(--red);font-size:13.5px;margin-top:8px;display:none}
+.h{display:flex;align-items:center;gap:8px;border-bottom:1px solid #eee;padding:10px 0}
+.h .t{flex:1;min-width:0}
+.h .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.h .t span{display:block;font-family:Menlo,Consolas,monospace;font-size:12.5px;direction:ltr;text-align:right;color:#333}
+.h .t small{color:#888;font-size:11.5px}
+.h button{padding:8px 10px;font-size:13px}
+#toast{position:fixed;left:50%;bottom:calc(24px + var(--safe-b));transform:translateX(-50%);background:#222;color:#fff;padding:9px 16px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.on{opacity:1}
+#lock .box{margin-top:40px}
+</style>
+</head>
+<body>
+<header><b>🔑 مولد أكواد التفعيل</b><small>English Exam Maker Pro — خاص بـ سجاد الزويني</small></header>
+
+<!-- ===== إدخال كلمة السر أول مرة ===== -->
+<section id="lock" style="display:none">
+  <div class="box">
+    <h3>🔒 أدخل كلمة السر (مرة وحدة بس)</h3>
+    <p class="hint">نفس قيمة <b dir="ltr">LICENSE_SECRET</b> الموجودة بالبرنامج. تنحفظ بهذا الجهاز فقط، والصفحة نفسها ما بيها أي سر.</p>
+    <label>كلمة السر:</label>
+    <input id="secIn" class="code" style="text-transform:none" autocomplete="off" autocapitalize="off" spellcheck="false">
+    <p class="hint">البصمة: <b id="fpLive" dir="ltr">—</b></p>
+    <button class="b-green full" id="saveSec">حفظ ومتابعة</button>
+  </div>
+</section>
+
+<!-- ===== التوليد ===== -->
+<section id="main" style="display:none">
+  <div class="box">
+    <h3>توليد كود جديد</h3>
+    <label>رمز جهاز الزبون:</label>
+    <div class="row">
+      <input id="mid" class="code" placeholder="XXXX-XXXX-XXXX-XXXX" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <button class="b-blue" id="paste">📋 لصق</button>
+    </div>
+    <label>اسم الزبون (اختياري):</label>
+    <input id="cname" placeholder="مثلاً: مكتبة النور - كربلاء">
+    <div class="err" id="err"></div>
+    <button class="b-green full" id="gen">⚡ توليد كود التفعيل</button>
+
+    <div class="result" id="res">
+      <div>كود التفعيل:</div>
+      <div class="key" id="key"></div>
+      <div class="btns">
+        <button class="b-blue" id="cpKey">📋 نسخ</button>
+        <a class="btn b-wa" id="waKey" target="_blank">📲 واتساب</a>
+        <button class="b-gray" id="shKey">📤 مشاركة</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="box">
+    <h3>📜 الأكواد السابقة</h3>
+    <div id="hist"></div>
+  </div>
+
+  <div class="box">
+    <p class="hint">بصمة كلمة السر المحفوظة: <b id="fpSaved" dir="ltr"></b></p>
+    <button class="b-red" id="resetSec" style="margin-top:8px;font-size:13px;padding:9px 12px">تغيير كلمة السر</button>
+  </div>
+</section>
+
+<div id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const K = "eemkg_";
+const get = (k, d) => { try { const v = localStorage.getItem(K + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
+const set = (k, v) => localStorage.setItem(K + k, JSON.stringify(v));
+const esc = s => (s || "").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(m){ const t = $("#toast"); t.textContent = m; t.classList.add("on"); clearTimeout(t.h); t.h = setTimeout(() => t.classList.remove("on"), 1800); }
+
+const hex = buf => Array.from(new Uint8Array(buf), x => x.toString(16).padStart(2, "0")).join("").toUpperCase();
+async function fingerprint(sec){
+  if (!sec) return "—";
+  const h = hex(await crypto.subtle.digest("SHA-256", new TextEncoder().encode(sec)));
+  return h.slice(0, 4) + "-" + h.slice(4, 8);
+}
+async function makeKey(sec, mid){
+  const enc = new TextEncoder();
+  const k = await crypto.subtle.importKey("raw", enc.encode(sec), {name: "HMAC", hash: "SHA-256"}, false, ["sign"]);
+  const h = hex(await crypto.subtle.sign("HMAC", k, enc.encode(mid.trim().toUpperCase())));
+  return [h.slice(0,5), h.slice(5,10), h.slice(10,15), h.slice(15,20)].join("-");
+}
+function normMid(s){
+  const c = (s || "").toUpperCase().replace(/[^0-9A-F]/g, "");
+  return c.length === 16 ? [c.slice(0,4), c.slice(4,8), c.slice(8,12), c.slice(12,16)].join("-") : null;
+}
+
+/* ---------- كلمة السر ---------- */
+async function showState(){
+  const sec = get("secret", "");
+  $("#lock").style.display = sec ? "none" : "block";
+  $("#main").style.display = sec ? "block" : "none";
+  if (sec){ $("#fpSaved").textContent = await fingerprint(sec); drawHist(); }
+}
+$("#secIn").addEventListener("input", async e => { $("#fpLive").textContent = await fingerprint(e.target.value.trim()); });
+$("#saveSec").onclick = () => {
+  const v = $("#secIn").value.trim();
+  if (v.length < 8) return toast("كلمة السر قصيرة");
+  set("secret", v); showState(); toast("تم الحفظ ✓");
+};
+$("#resetSec").onclick = () => {
+  if (!confirm("مسح كلمة السر المحفوظة وإدخال واحدة جديدة؟")) return;
+  localStorage.removeItem(K + "secret"); $("#secIn").value = ""; $("#fpLive").textContent = "—"; showState();
+};
+
+/* ---------- التوليد ---------- */
+let current = null;
+$("#paste").onclick = async () => {
+  try { const t = await navigator.clipboard.readText(); const m = t.match(/[0-9A-Fa-f]{4}\s*-?\s*[0-9A-Fa-f]{4}\s*-?\s*[0-9A-Fa-f]{4}\s*-?\s*[0-9A-Fa-f]{4}/);
+    $("#mid").value = m ? m[0] : t.trim(); }
+  catch (e) { toast("اضغط مطولاً على الخانة واختر لصق"); $("#mid").focus(); }
+};
+$("#gen").onclick = async () => {
+  $("#err").style.display = "none";
+  const raw = $("#mid").value, name = $("#cname").value.trim();
+  // يقبل الرسالة كاملة من الواتساب ويطلع منها الرمز
+  const found = raw.match(/[0-9A-Fa-f]{4}\s*-?\s*[0-9A-Fa-f]{4}\s*-?\s*[0-9A-Fa-f]{4}\s*-?\s*[0-9A-Fa-f]{4}/);
+  const mid = normMid(found ? found[0] : raw);
+  if (!mid){ $("#err").textContent = "رمز الجهاز غير صحيح. لازم يكون 16 حرف/رقم مثل: A1B2-C3D4-E5F6-7890"; $("#err").style.display = "block"; return; }
+  $("#mid").value = mid;
+  const key = await makeKey(get("secret", ""), mid);
+  current = {mid, key, name, date: new Date().toLocaleString("en-GB")};
+  const h = get("hist", []).filter(x => x.mid !== mid);
+  h.unshift(current); set("hist", h.slice(0, 300));
+  $("#key").textContent = key;
+  const msg = `كود تفعيل English Exam Maker Pro:\n${key}\n\nالصقه بنافذة التفعيل واضغط (تفعيل الآن).\nتطوير وتصميم: سجاد الزويني - 07705686013`;
+  $("#waKey").href = "https://wa.me/?text=" + encodeURIComponent(msg);
+  $("#shKey").onclick = () => navigator.share ? navigator.share({text: msg}).catch(() => {}) : copy(msg);
+  $("#res").classList.add("on");
+  drawHist();
+  $("#mid").blur(); $("#cname").blur();
+};
+function copy(t){
+  (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => toast("تم النسخ ✓")).catch(() => toast("اضغط مطولاً على الكود للنسخ"));
+}
+$("#cpKey").onclick = () => current && copy(current.key);
+
+function drawHist(){
+  const h = get("hist", []);
+  $("#hist").innerHTML = h.length ? h.map((x, i) => `<div class="h"><div class="t">
+      <b>${esc(x.name) || "بدون اسم"}</b><span>📱 ${esc(x.mid)}</span><span>🔑 ${esc(x.key)}</span><small>${esc(x.date)}</small></div>
+      <button class="b-blue" data-cp="${i}">نسخ</button><button class="b-red" data-del="${i}">✕</button></div>`).join("")
+    : `<p class="hint" style="text-align:center">ما كو أكواد بعد.</p>`;
+}
+$("#hist").onclick = e => {
+  const h = get("hist", []);
+  if (e.target.dataset.cp) copy(h[+e.target.dataset.cp].key);
+  if (e.target.dataset.del && confirm("حذف هذا السجل؟")){ h.splice(+e.target.dataset.del, 1); set("hist", h); drawHist(); }
+};
+
+showState();
+</script>
+</body>
+</html>

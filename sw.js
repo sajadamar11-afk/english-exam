@@ -1,5 +1,5 @@
 // غيّر رقم النسخة عند كل تحديث حتى تنزل النسخة الجديدة للزبائن
-const CACHE = "eem-v1";
+const CACHE = "eem-v2";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png",
   "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
   "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"];
