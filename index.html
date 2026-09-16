@@ -88,6 +88,10 @@ textarea{resize:vertical;line-height:1.35}
 .lvl1 .ind{background:#dff0e2}
 .subbtns{display:flex;gap:6px;flex-wrap:wrap}
 .sub.pt{background:#5b6b8c}
+.pbox{position:relative}
+.pbox textarea{padding-right:40px}
+.pdel{position:absolute;top:6px;right:6px;width:28px;height:28px;border:0;border-radius:50%;background:#d0333b;color:#fff;font-weight:bold;font-size:14px;padding:0;line-height:28px}
+.sub.ps{background:#8a6d3b}
 .seprow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px;padding-top:8px;border-top:1px solid #dde0d6;direction:rtl;font-size:13px;color:#333}
 .seprow .seg button{font-family:inherit;padding:6px 10px}
 .qsep{margin:4px 18px 0;height:0}
@@ -355,7 +359,9 @@ function renderQuestions(){
         <input type="text" placeholder="Question title  e.g. UNSEEN PASSAGE : ..." data-p="questions.${i}.title">
         <input type="text" class="mark" placeholder="Mark (10M)" data-p="questions.${i}.mark">
       </div>
-      <textarea rows="3" placeholder="Passage text or instructions (اختياري)..." data-p="questions.${i}.passage"></textarea>
+      ${q.noPassage ? "" : `<div class="pbox">
+        <textarea rows="3" placeholder="Passage text or instructions (اختياري)..." data-p="questions.${i}.passage"></textarea>
+        <button class="pdel" data-act="delPassage" data-qi="${i}" title="إزالة خانة القطعة">✕</button></div>`}
       ${q.items.map((it, j) => `
         <div class="item${it.level === 1 ? " lvl1" : ""}">
           <button class="x" data-act="delItem" data-qi="${i}" data-ij="${j}">✕</button>
@@ -367,6 +373,7 @@ function renderQuestions(){
       <div class="subbtns" dir="ltr">
         <button class="sub" data-act="addItem" data-qi="${i}">+ Add Sub-Item</button>
         <button class="sub pt" data-act="addPoint" data-qi="${i}">+ Add Point (${subStyleName(q.numbering)})</button>
+        ${q.noPassage ? `<button class="sub ps" data-act="addPassage" data-qi="${i}">+ Passage</button>` : ""}
       </div>
       <div class="seprow"><span>➖ فاصل بعد السؤال:</span>
         <div class="seg">${[["", "بدون"], ["solid", "━ خط"], ["dashed", "┅ متقطع"]].map(([k, t]) =>
@@ -427,7 +434,7 @@ function buildBlocks(){
     qb.push(mk(`<div class="qt" style="font-size:${px}px;line-height:1.35">
       <div class="tt"><b>Q${i + 1}\\ </b><u style="color:${link}">${fx(q.title)}</u></div>
       <div class="m">${esc(normMark(q.mark))}</div></div>`, true));
-    if (hasText(q.passage)){
+    if (!q.noPassage && hasText(q.passage)){
       q.passage.split(/\n\s*\n/).forEach(par => {           // كل فقرة كتلة مستقلة
         if (hasText(par)) qb.push(mk(`<p class="ps" style="font-size:${px}px;line-height:${lh}">${linesHtml(par)}</p>`));
       });
@@ -671,6 +678,20 @@ document.addEventListener("click", e => {
       q.items.splice(ij, 1);
       renumber(q);
       renderQuestions(); changed();
+      break;
+    }
+    case "delPassage": {
+      const q = D.questions[qi];
+      if (hasText(q.passage) && !confirm("حذف القطعة المكتوبة وإزالة الخانة؟")) break;
+      q.passage = ""; q.noPassage = true;
+      renderQuestions(); changed();
+      break;
+    }
+    case "addPassage": {
+      D.questions[qi].noPassage = false;
+      renderQuestions(); changed();
+      const t = document.querySelector(`[data-p="questions.${qi}.passage"]`);
+      if (t) t.focus();
       break;
     }
     case "sep": {
